@@ -14,6 +14,11 @@ Arlo platform plugin for [Homebridge](https://github.com/nfarina/homebridge).
 
 - npm update -g homebridge-arlo
 
+# Setup
+Arlo only allows a single login to each account at a time, as a result, if you are running Homebridge and the Arlo on the same account...logging in on your mobile device to view cameras will log out homebridge's Arlo access.
+
+Therefore, I **highly recommend** creating an additional account in Arlo, just for homebridge access.
+
 # Configuration
 
  ```javascript
@@ -28,17 +33,40 @@ Arlo platform plugin for [Homebridge](https://github.com/nfarina/homebridge).
 
 ```
 
-# Siri commands
+## Optional parameters
+By default, Arlo only provides two modes (**armed** and **disarmed**). Since HomeKit allows a security system to have 4 statees (**away**, **home**, **night** and **off**), we provide two config parameters to enable support for the additional 2 states. If these configuration parameters aren't provided setting the state to **home** or **night** will result in the state being set to **away**.
 
-**Arming - Away Mode**
+`stay_arm` - The string label for the mode created in Arlo for the **home** or **stay** state.
+
+`night_arm` - The string label for the mode created in Arlo for the **night** state.
+
+Sample Configuration
+
+ ```javascript
+"platforms": [
+    {
+        "platform": "Arlo",
+        "name": "Arlo",
+        "email": "<insert arlo account email address>",
+        "password": "<insert arlo account password>",
+        "stay_arm": "mode2",
+        "night_arm": "mode3"
+    }
+]
+
+```
+
+# Siri commands
+**Arming - Away Mode**<br/>
 _Set the security system to armed/away_
 
-**Disarming - Off Mode**
+**Disarming - Off Mode**<br/>
 _Set the security system to disarmed/off_
 
-**Arming - Home Mode**
+**Arming - Home Mode**<br/>
 _Set the security system to stay_
 
-**Arming - Night Mode**
+**Arming - Night Mode**<br/>
 _Set the security system to night_
+
 

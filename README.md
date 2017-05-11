@@ -16,8 +16,6 @@ Arlo platform plugin for [Homebridge](https://github.com/nfarina/homebridge).
 
 # Configuration
 
-Configuration sample:
-
  ```javascript
 "platforms": [
     {
@@ -29,4 +27,22 @@ Configuration sample:
 ]
 
 ```
+
+# Siri commands
+
+**Arming - Away Mode**
+
+_Set the security system to armed/away_
+
+**Disarming - Off Mode**
+
+_Set the security system to disarmed/off_
+
+**Arming - Home Mode**
+
+_Set the security system to stay_
+
+**Arming - Night Mode**
+
+_Set the security system to night_
 

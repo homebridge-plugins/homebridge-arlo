@@ -15,9 +15,12 @@ Arlo platform plugin for [Homebridge](https://github.com/nfarina/homebridge).
 - npm update -g homebridge-arlo
 
 # Setup
-Arlo only allows a single login to each account at a time, as a result, if you are running Homebridge and the Arlo on the same account...logging in on your mobile device to view cameras will log out homebridge's Arlo access.
+Arlo only allows a single login to each account at a time, as a result, if you are running Homebridge and the Arlo on the same account...logging in on your iPhone to view cameras will log out homebridge's Arlo access.
 
 Therefore, I **highly recommend** creating an additional account in Arlo, just for homebridge access.
+
+# Limitations
+This plugin currently only support Base Stations, not cameras. This is mainly because I haven't gotten video streaming to work yet.
 
 # Configuration
 

@@ -8,14 +8,14 @@
         "url": "git://github.com/devbobo/homebridge-arlo.git"
     },
     "engines": {
-        "node": ">=6.0.0",
-        "homebridge": ">=0.4.1"
+        "node": ">=6",
+        "homebridge": ">=0.4.29"
     },
   "keywords": [
         "homebridge-plugin",
         "arlo"
     ],
     "dependencies": {
-        "node-arlo": ">=0.0.1"
+        "node-arlo": ">=0.0.5"
     }
 }

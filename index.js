@@ -456,20 +456,15 @@ class ArloCameraSource extends EventEmitter {
     }
 
     handleSnapshotRequest(request, callback) {
-        // todo - remove this
         let now = Date.now();
 
         if (this.lastSnapshot && now < this.lastSnapshot + 300000) {
-            this.log('Camera %s [%s] - Next snapshot in %d secs', this.accessory.displayName, this.device.id, parseInt((this.lastSnapshot + 300000 - now) / 1000));
+            this.log('Snapshot skipped: Camera %s [%s] - Next in %d secs', this.accessory.displayName, this.device.id, parseInt((this.lastSnapshot + 300000 - now) / 1000));
             callback();
             return;
         }
 
-        this.log("Camera %s [%s] - Snapshot request", this.accessory.displayName, this.device.id);
-
-        //this.once('snapshot', function(data) {
-        //    callback(undefined,data);
-        //});
+        this.log("Snapshot request: Camera %s [%s]", this.accessory.displayName, this.device.id);
 
         this.device.getSnapshot(function(error, data) {
             if (error) {
@@ -480,12 +475,11 @@ class ArloCameraSource extends EventEmitter {
 
             this.lastSnapshot = Date.now();
 
-            this.log("Camera %s [%s] - Snapshot confirmed", this.accessory.displayName, this.device.id);
-            this.log(data);
+            this.log("Snapshot confirmed: Camera %s [%s]", this.accessory.displayName, this.device.id);
 
-           this.device.once('fullFrameSnapshotAvailable', function(url) {
+           this.device.once(Arlo.FF_SNAPSHOT, function(url) {
                 this.device.downloadSnapshot(url, function (data) {
-                    this.log("Camera %s [%s] - Snapshot downloaded", this.accessory.displayName, this.device.id);
+                    this.log("Snapshot downloaded: Camera %s [%s]", this.accessory.displayName, this.device.id);
                     callback(undefined, data);
                 }.bind(this));
             }.bind(this));

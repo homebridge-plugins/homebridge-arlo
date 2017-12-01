@@ -16,6 +16,6 @@
         "arlo"
     ],
     "dependencies": {
-        "node-arlo": ">=0.0.5"
+        "node-arlo": ">=0.0.6"
     }
 }

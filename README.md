@@ -38,9 +38,9 @@ This plugin currently only support Base Stations, not cameras. This is mainly be
         "interval": 6000 
     }
 ]
-NOTE: interval time is in milliseconds - e.g. 6000 ms are 10 sec
-```
 
+```
+NOTE: interval time is in milliseconds - e.g. 6000 ms are 10 sec
 ## Optional parameters
 By default, Arlo only provides two modes (**armed** and **disarmed**). Since HomeKit allows a security system to have 4 statees (**away**, **home**, **night** and **off**), we provide two config parameters to enable support for the additional 2 states. If these configuration parameters aren't provided setting the state to **home** or **night** will result in the state being set to **away**.
 

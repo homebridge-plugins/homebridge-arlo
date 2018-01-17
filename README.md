@@ -35,10 +35,10 @@ This plugin currently only support Base Stations, not cameras. This is mainly be
         "name": "Arlo",
         "email": "<insert arlo account email address>",
         "password": "<insert arlo account password>"
-        "interval": 6000 // time is in ms
+        "interval": 6000 
     }
 ]
-
+NOTE: interval time is in milliseconds - e.g. 6000 ms are 10 sec
 ```
 
 ## Optional parameters

@@ -45,9 +45,10 @@ because I haven't gotten video streaming to work yet.
 
 ```
 NOTE: interval time is in milliseconds - e.g. 6000 ms are 10 sec
+
 ## Optional parameters
 By default, Arlo only provides two modes (**armed** and **disarmed**). Since
-HomeKit allows a security system to have 4 statees (**away**, **home**,
+HomeKit allows a security system to have 4 states (**away**, **home**,
 **night** and **off**), we provide two config parameters to enable support for
 the additional 2 states. If these configuration parameters aren't provided
 setting the state to **home** or **night** will result in the state being set
@@ -83,18 +84,3 @@ via HomeKit:
         "night_arm": "mode3"
     }
 ]
-
-```
-
-# Siri commands
-**Arming - Away Mode**<br/>
-_Set the security system to armed/away_
-
-**Disarming - Off Mode**<br/>
-_Set the security system to disarmed/off_
-
-**Arming - Home Mode**<br/>
-_Set the security system to stay_
-
-**Arming - Night Mode**<br/>
-_Set the security system to night_

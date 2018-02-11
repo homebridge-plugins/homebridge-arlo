@@ -16,15 +16,19 @@ Arlo platform plugin for [Homebridge](https://github.com/nfarina/homebridge).
 
 # Updating
 
-- npm update -g homebridge-arlo
+- `npm update -g homebridge-arlo`
 
 # Setup
-Arlo only allows a single login to each account at a time, as a result, if you are running Homebridge and the Arlo on the same account...logging in on your iPhone to view cameras will log out homebridge's Arlo access.
+Arlo only allows a single login to each account at a time, as a result, if you
+are running Homebridge and the Arlo on the same account... logging in on your
+iPhone to view cameras will log out homebridge's Arlo access.
 
-Therefore, I **highly recommend** creating an additional account in Arlo, just for homebridge access.
+Therefore, I **highly recommend** creating an additional account in Arlo, just
+for homebridge access.
 
 # Limitations
-This plugin currently only support Base Stations, not cameras. This is mainly because I haven't gotten video streaming to work yet.
+This plugin currently only support Base Stations, not cameras. This is mainly
+because I haven't gotten video streaming to work yet.
 
 # Configuration
 
@@ -41,13 +45,31 @@ This plugin currently only support Base Stations, not cameras. This is mainly be
 ```
 
 ## Optional parameters
-By default, Arlo only provides two modes (**armed** and **disarmed**). Since HomeKit allows a security system to have 4 statees (**away**, **home**, **night** and **off**), we provide two config parameters to enable support for the additional 2 states. If these configuration parameters aren't provided setting the state to **home** or **night** will result in the state being set to **away**.
+By default, Arlo only provides two modes (**armed** and **disarmed**). Since
+HomeKit allows a security system to have 4 statees (**away**, **home**,
+**night** and **off**), we provide two config parameters to enable support for
+the additional 2 states. If these configuration parameters aren't provided
+setting the state to **home** or **night** will result in the state being set
+to **away**, i.e. **armed**.
 
-`stay_arm` - The string label for the mode created in Arlo for the **home** or **stay** state.
+Arlo uses the string `modeX` to identify each mode, with `mode0` used for the
+default **disarmed** state and `mode1` used for the default **armed** state.
+To determine the correct `modeX` string for your custom state, login to the
+[Arlo web console](https://arlo.netgear.com) and click the "Edit Mode"  button.
+The URL will show the ` modeX` string for that custom state, e.g.
+ https\://arlo.netgear.com/#/modes/`<USER_ID>`/edit/**mode2**
 
-`night_arm` - The string label for the mode created in Arlo for the **night** state.
+Once you've determined the `modeX` string of your custom mode(s), you can
+configure `homebridge-arlo` to use those for the additional modes available
+via HomeKit:
 
-Sample Configuration
+* `stay_arm` - The `modeX` label for the custom mode created in Arlo for the
+**home** or **stay** state.
+* `night_arm` - The `modeX` label for the custom mode created in Arlo for the
+**night** state.
+
+
+### Sample Configuration with Optional Parameters
 
  ```javascript
 "platforms": [
@@ -75,5 +97,3 @@ _Set the security system to stay_
 
 **Arming - Night Mode**<br/>
 _Set the security system to night_
-
-

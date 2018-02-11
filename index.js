@@ -123,6 +123,7 @@ class ArloBaseStationAccessory {
 
         this.STAY_ARM = config.stay_arm || Arlo.ARMED;
         this.NIGHT_ARM = config.night_arm || Arlo.ARMED;
+        this.interval = config.interval;
 
         this.accessory
             .getService(Service.AccessoryInformation)
@@ -195,7 +196,7 @@ class ArloBaseStationAccessory {
             function(){
                 this.device.subscribe();
             }.bind(this),
-            60000
+            (this.interval)
         );
     }
 

@@ -39,11 +39,12 @@ because I haven't gotten video streaming to work yet.
         "name": "Arlo",
         "email": "<insert arlo account email address>",
         "password": "<insert arlo account password>"
+        "interval": 6000 
     }
 ]
 
 ```
-
+NOTE: interval time is in milliseconds - e.g. 6000 ms are 10 sec
 ## Optional parameters
 By default, Arlo only provides two modes (**armed** and **disarmed**). Since
 HomeKit allows a security system to have 4 statees (**away**, **home**,

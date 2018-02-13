@@ -39,7 +39,7 @@ because I haven't gotten video streaming to work yet.
         "name": "Arlo",
         "email": "<insert arlo account email address>",
         "password": "<insert arlo account password>"
-        "interval": 6000 
+        "interval": 6000
     }
 ]
 
@@ -84,3 +84,48 @@ via HomeKit:
         "night_arm": "mode3"
     }
 ]
+```
+
+## Using Siri to control Arlo via Homebridge
+
+Apple removed the ability for Siri to directly control Security Systems in
+iOS 11.
+
+However, the here are a couple of ways to workaround this restriction:
+
+### Using HomeKit Scenes
+
+You can add a Security System device like the Arlo device exposed via Homebridge
+to a HomeKit Scene. You can then use Siri to activate that scene.
+
+For example, if you create a scene called "_Good Morning_", you could add the
+an Arlo state to that Scene and saying, "_Hey Siri, Good Morning!_" would
+activate the scene and set the Arlo state accordingly.
+
+> **Note**: HomeKit will **not** automatically activate a scene
+> using geolocation (e.g. "_First person arrives home_" or "_Last person leaves
+> home_") if it contains a Security System accessory. Instead, it will prompt
+> you to confirm whether the scene should be activated.
+
+### Using an dummy or virtual device
+
+HomeKit automation can be triggered "_When an accessory is controlled_", i.e.
+when the state of an accessory is changed. This means you can arm or disarm
+Arlo when another accessory is controlled.
+
+Here's how to use a virtual accessory to control Arlo:
+
+1. Install the [`homebridge-arlo`](https://github.com/devbobo/homebridge-arlo)
+plugin but _don't_ use "Arlo" as the name of the accessory in `config.json`.
+1. Install the [`homebridge-dummy`](https://github.com/nfarina/homebridge-dummy)
+plugin and create a stateful switch named "_Arlo_".
+1. Create a HomeKit automation that arms Arlo when this stateful switch is turned
+"On" and create another automation that disarms Arlo when this switch is turned
+"Off".
+
+Now, Siri's default accessory handling phrases can be used, i.e. "_Hey Siri, turn
+Arlo on_". Siri will turn the virtual stateful switch on and then the automation
+will automatically arm Arlo.
+
+Likewise, you can use HomeKit geolocation to turn the virtual switch on or off
+and the automation will automatically arm or disarm Arlo.

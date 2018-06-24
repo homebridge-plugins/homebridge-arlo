@@ -85,7 +85,7 @@ class ArloPlatform {
             this.api.publishCameraAccessories("homebridge-arlo", [accessory]);
         }
         else if (deviceType === Arlo.Q) {
-            this.log("Found: Q Camera - %s [%s]", device.id, device.id);
+            this.log("Found: Camera - %s [%s]", device.id, device.id);
 
             let accessory = new PlatformAccessory(device.id, UUIDGen.generate(device.id), Accessory.Categories.CAMERA);
 
@@ -143,7 +143,7 @@ class ArloPlatform {
                     this.accessories[uuid] = new ArloCameraAccessory(this.log, (accessory instanceof ArloBaseStationAccessory ? accessory.accessory : accessory), device);
                 }
                 else if(device.getType() === Arlo.Q) {
-                    this.log("Online: Q %s [%s]", accessory.displayName, device.id);
+                    this.log("Online: Camera %s [%s]", accessory.displayName, device.id);
                     this.accessories[uuid] = new ArloQAccessory(this.log, this.config, (accessory instanceof ArloQAccessory ? accessory.accessory : accessory), device);
                 }
             }.bind(this));
@@ -543,7 +543,7 @@ class ArloCameraSource extends EventEmitter {
     }
 
     _createStreamControllers(options) {
-        this.log("_createStreamControllers");
+        //this.log("_createStreamControllers");
         let streamController = new StreamController(1, options, this);
 
         this.services.push(streamController.service);

@@ -1,6 +1,6 @@
 {
     "name": "homebridge-arlo",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "author": "David Parry <npm@introversion.com.au>",
     "description": "Arlo platform plugin for homebridge",
     "repository": {
@@ -16,6 +16,6 @@
         "arlo"
     ],
     "dependencies": {
-        "node-arlo": ">=0.0.6"
+        "node-arlo": ">=0.0.7"
     }
 }

@@ -140,7 +140,7 @@ class ArloPlatform {
                 }
                 else if(device.getType() === Arlo.CAMERA) {
                     this.log("Online: Camera %s [%s]", accessory.displayName, device.id);
-                    this.accessories[uuid] = new ArloCameraAccessory(this.log, (accessory instanceof ArloBaseStationAccessory ? accessory.accessory : accessory), device);
+                    this.accessories[uuid] = new ArloCameraAccessory(this.log, (accessory instanceof ArloCameraAccessory ? accessory.accessory : accessory), device);
                 }
                 else if(device.getType() === Arlo.Q) {
                     this.log("Online: Camera %s [%s]", accessory.displayName, device.id);

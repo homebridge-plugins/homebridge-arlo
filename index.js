@@ -1,6 +1,9 @@
 'use strict';
 
 const Arlo = require('node-arlo');
+const crypto = require('crypto');
+const ip = require('ip');
+
 const EventEmitter = require('events').EventEmitter;
 
 const DEFAULT_SUBSCRIBE_TIME = 60000;
@@ -457,8 +460,16 @@ class ArloCameraSource extends EventEmitter {
         this.accessory = accessory;
         this.device = device;
         this.services = [];
+        this.pendingSessions = {};
+        this.ongoingSessions = {};
         this.streamControllers = [];
         this.lastSnapshot = null;
+
+        this.videoProcessor = 'ffmpeg';
+        this.videoCodec = "h264_omx";
+        this.audioCodec = "libfdk_aac";
+        this.packetsize = 1316; // 188, 376
+        this.additionalCommandline = "";
 
         let options = {
             proxy: false, // Requires RTP/RTCP MUX Proxy
@@ -473,20 +484,25 @@ class ArloCameraSource extends EventEmitter {
                     [320, 240, 15]
                 ],
                 codec: {
-                    profiles: [StreamController.VideoCodecParamProfileIDTypes.MAIN],
-                    levels: [StreamController.VideoCodecParamLevelTypes.TYPE4_0]
+                    profiles: [0, 1, 2],    //[StreamController.VideoCodecParamProfileIDTypes.MAIN],
+                    levels: [0, 1, 2]       //[StreamController.VideoCodecParamLevelTypes.TYPE4_0]
                 }
             },
             audio: {
                 codecs: [
                     {
                         type: 'OPUS',
+                        samplerate: 24
+                    },
+                    {
+                        type: "AAC-eld",
                         samplerate: 16
                     }
                 ]
             }
         }
 
+        this._createCameraControlService();
         this._createStreamControllers(options);
     }
 
@@ -527,10 +543,6 @@ class ArloCameraSource extends EventEmitter {
         }.bind(this));
     }
 
-    handleStreamRequest(request) {
-        this.log("handleStreamRequest");
-    }
-
     prepareStream(request, callback) {
         this.log("prepareStream");
 
@@ -540,6 +552,226 @@ class ArloCameraSource extends EventEmitter {
             callback();
         }.bind(this));
         */
+
+        this.device.getStream(function (streamURL) {
+
+            var sessionInfo = {};
+            let sessionID = request["sessionID"];
+            let targetAddress = request["targetAddress"];
+
+            sessionInfo["streamURL"] = streamURL;
+            sessionInfo["address"] = targetAddress;
+
+            var response = {};
+
+            let videoInfo = request["video"];
+            if (videoInfo) {
+                let targetPort = videoInfo["port"];
+                let srtp_key = videoInfo["srtp_key"];
+                let srtp_salt = videoInfo["srtp_salt"];
+
+                // SSRC is a 32 bit integer that is unique per stream
+                // SSRC is a 32 bit integer that is unique per stream
+                let ssrcSource = crypto.randomBytes(4);
+                ssrcSource[0] = 0;
+                let ssrc = ssrcSource.readInt32BE(0, true);
+
+                let videoResponse = {
+                    port: targetPort,
+                    ssrc: ssrc,
+                    srtp_key: srtp_key,
+                    srtp_salt: srtp_salt
+                };
+
+                response["video"] = videoResponse;
+                sessionInfo["video_port"] = targetPort;
+                sessionInfo["video_srtp"] = Buffer.concat([srtp_key, srtp_salt]);
+                sessionInfo["video_ssrc"] = ssrc;
+            }
+
+            let audioInfo = request["audio"];
+            if (audioInfo) {
+                let targetPort = audioInfo["port"];
+                let srtp_key = audioInfo["srtp_key"];
+                let srtp_salt = audioInfo["srtp_salt"];
+
+                // SSRC is a 32 bit integer that is unique per stream
+                let ssrcSource = crypto.randomBytes(4);
+                ssrcSource[0] = 0;
+                let ssrc = ssrcSource.readInt32BE(0, true);
+
+                let audioResp = {
+                    port: targetPort,
+                    ssrc: ssrc,
+                    srtp_key: srtp_key,
+                    srtp_salt: srtp_salt
+                };
+
+                response["audio"] = audioResp;
+
+                sessionInfo["audio_port"] = targetPort;
+                sessionInfo["audio_srtp"] = Buffer.concat([srtp_key, srtp_salt]);
+                sessionInfo["audio_ssrc"] = ssrc;
+            }
+
+            let currentAddress = ip.address();
+            var addressResp = {
+                address: currentAddress
+            };
+
+            if (ip.isV4Format(currentAddress)) {
+                addressResp["type"] = "v4";
+            } else {
+                addressResp["type"] = "v6";
+            }
+
+            response["address"] = addressResp;
+            this.pendingSessions[UUIDGen.unparse(sessionID)] = sessionInfo;
+
+            callback(response);
+        });
+    }
+
+    handleStreamRequest(request) {
+        this.log("handleStreamRequest");
+
+        var sessionID = request["sessionID"];
+        var requestType = request["type"];
+        if (sessionID) {
+            let sessionIdentifier = UUIDGen.unparse(sessionID);
+
+            // Start streaming
+            if (requestType == "start") {
+                var sessionInfo = this.pendingSessions[sessionIdentifier];
+                if (sessionInfo) {
+                    var width = 1280;
+                    var height = 720;
+                    var fps = 30;
+                    var vbitrate = 300;
+                    var abitrate = 32;
+                    var asamplerate = 16;
+                    var vcodec = this.videoCodec;
+                    var acodec = this.audioCodec;
+                    var packetsize = this.packetsize || 1316;
+                    var additionalCommandline = this.additionalCommandline;
+
+                    let videoInfo = request["video"];
+                    if (videoInfo) {
+                        width = videoInfo["width"];
+                        height = videoInfo["height"];
+
+                        let expectedFPS = videoInfo["fps"];
+                        if (expectedFPS < fps) {
+                            fps = expectedFPS;
+                        }
+                        if(videoInfo["max_bit_rate"] < vbitrate) {
+                            vbitrate = videoInfo["max_bit_rate"];
+                        }
+                    }
+
+                    let audioInfo = request["audio"];
+                    if (audioInfo) {
+                        abitrate = audioInfo["max_bit_rate"];
+                        asamplerate = audioInfo["sample_rate"];
+                    }
+
+                    let streamURL = sessionInfo["streamURL"];
+
+                    let targetAddress = sessionInfo["address"];
+                    let targetVideoPort = sessionInfo["video_port"];
+                    let videoKey = sessionInfo["video_srtp"];
+                    let videoSsrc = sessionInfo["video_ssrc"];
+                    let targetAudioPort = sessionInfo["audio_port"];
+                    let audioKey = sessionInfo["audio_srtp"];
+                    let audioSsrc = sessionInfo["audio_ssrc"];
+
+                    let ffmpegCommand = '-re -i ' + streamURL + ' -map 0:0' +
+                      ' -vcodec ' + vcodec +
+                      ' -pix_fmt yuv420p' +
+                      ' -r ' + fps +
+                      ' -f rawvideo' +
+                      ' ' + additionalCommandline +
+                      ' -vf scale=' + width + ':' + height +
+                      ' -b:v ' + vbitrate + 'k' +
+                      ' -bufsize ' + vbitrate+ 'k' +
+                      ' -maxrate '+ vbitrate + 'k' +
+                      ' -payload_type 99' +
+                      ' -ssrc ' + videoSsrc +
+                      ' -f rtp' +
+                      ' -srtp_out_suite AES_CM_128_HMAC_SHA1_80' +
+                      ' -srtp_out_params ' + videoKey.toString('base64') +
+                      ' srtp://' + targetAddress + ':' + targetVideoPort +
+                      '?rtcpport=' + targetVideoPort +
+                      '&localrtcpport=' + targetVideoPort +
+                      '&pkt_size=' + packetsize;
+
+                    if(this.audio){
+                        ffmpegCommand+= ' -map 0:1' +
+                        ' -acodec ' + acodec +
+                        ' -profile:a aac_eld' +
+                        ' -flags +global_header' +
+                        ' -f null' +
+                        ' -ar ' + asamplerate + 'k' +
+                        ' -b:a ' + abitrate + 'k' +
+                        ' -bufsize ' + abitrate + 'k' +
+                        ' -ac 1' +
+                        ' -payload_type 110' +
+                        ' -ssrc ' + audioSsrc +
+                        ' -f rtp' +
+                        ' -srtp_out_suite AES_CM_128_HMAC_SHA1_80' +
+                        ' -srtp_out_params ' + audioKey.toString('base64') +
+                        ' srtp://' + targetAddress + ':' + targetAudioPort +
+                        '?rtcpport=' + targetAudioPort +
+                        '&localrtcpport=' + targetAudioPort +
+                        '&pkt_size=' + packetsize;
+                    }
+
+                    let ffmpeg = spawn(this.videoProcessor, ffmpegCommand.split(' '), {env: process.env});
+                    this.log("Start streaming video from " + this.name + " with " + width + "x" + height + "@" + vbitrate + "kBit");
+                    if(this.debug){
+                        console.log("ffmpeg " + ffmpegCommand);
+                    }
+
+                    // Always setup hook on stderr.
+                    // Without this streaming stops within one to two minutes.
+                    ffmpeg.stderr.on('data', function(data) {
+                        // Do not log to the console if debugging is turned off
+                        if(this.debug){
+                            console.log(data.toString());
+                        }
+                    });
+
+                    let self = this;
+                    ffmpeg.on('error', function(error){
+                        self.log("An error occurs while making stream request");
+                        self.debug ? self.log(error) : null;
+                    });
+                    ffmpeg.on('close', (code) => {
+                        if(code == null || code == 0 || code == 255){
+                            self.log("Stopped streaming");
+                        } else {
+                            self.log("ERROR: FFmpeg exited with code " + code);
+                            for(var i=0; i < self.streamControllers.length; i++){
+                                var controller = self.streamControllers[i];
+                                if(controller.sessionIdentifier === sessionID){
+                                    controller.forceStop();
+                                }
+                            }
+                        }
+                    });
+
+                    // Add to ongoing sessions now that it's been started
+                    this.ongoingSessions[sessionIdentifier] = ffmpeg;
+                }
+                // Remove from pending sessions
+                delete this.pendingSessions[sessionIdentifier];
+            } else if (requestType == "stop") {
+                var ffmpegProcess = this.ongoingSessions[sessionIdentifier];
+                if (ffmpegProcess) {
+                    ffmpegProcess.kill('SIGTERM');
+                }
+            }
+        }
     }
 
     _createStreamControllers(options) {
@@ -548,6 +780,15 @@ class ArloCameraSource extends EventEmitter {
 
         this.services.push(streamController.service);
         this.streamControllers.push(streamController);
+    }
+
+    _createCameraControlService() {
+        var controlService = new Service.CameraControl();
+        this.services.push(controlService);
+        if(this.audio){
+            var microphoneService = new Service.Microphone();
+        }
+        this.services.push(microphoneService);
     }
 }
 

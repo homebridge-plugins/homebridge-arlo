@@ -72,6 +72,7 @@ class ArloPlatform {
             accessory.addService(Service.MotionSensor, deviceName);
 
             service = accessory.addService(Service.CameraControl, deviceName);
+            service = accessory.addService(Service.Microphone, deviceName);
 
             service.addCharacteristic(Characteristic.NightVision);
             service.addCharacteristic(Characteristic.ImageMirroring);
@@ -502,7 +503,6 @@ class ArloCameraSource extends EventEmitter {
             }
         }
 
-        this._createCameraControlService();
         this._createStreamControllers(options);
     }
 
@@ -780,15 +780,6 @@ class ArloCameraSource extends EventEmitter {
 
         this.services.push(streamController.service);
         this.streamControllers.push(streamController);
-    }
-
-    _createCameraControlService() {
-        var controlService = new Service.CameraControl();
-        this.services.push(controlService);
-        if(this.audio){
-            var microphoneService = new Service.Microphone();
-        }
-        this.services.push(microphoneService);
     }
 }
 

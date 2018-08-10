@@ -1,6 +1,7 @@
 'use strict';
 
 const Arlo = require('node-arlo');
+const debug = require('debug')('Homebridge-Arlo');
 const crypto = require('crypto');
 const ip = require('ip');
 const spawn = require('child_process').spawn;
@@ -505,6 +506,7 @@ class ArloCameraSource extends EventEmitter {
         }
 
         this._createStreamControllers(options);
+        debug('Generated Camera Controller');
     }
 
     handleCloseConnection(connectionID) {
@@ -514,6 +516,7 @@ class ArloCameraSource extends EventEmitter {
     }
 
     handleSnapshotRequest(request, callback) {
+        debug('Snapshot requested');
         let now = Date.now();
 
         if (this.lastSnapshot && now < this.lastSnapshot + 300000) {
@@ -545,7 +548,7 @@ class ArloCameraSource extends EventEmitter {
     }
 
     prepareStream(request, callback) {
-        this.log("prepareStream");
+        debug('Prepare stream request');
 
         /*
         this.device.getStream(function(error, data, body) {
@@ -634,7 +637,7 @@ class ArloCameraSource extends EventEmitter {
     }
 
     handleStreamRequest(request) {
-        this.log("handleStreamRequest");
+        debug('Handle stream request');
 
         var sessionID = request["sessionID"];
         var requestType = request["type"];

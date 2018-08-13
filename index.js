@@ -34,6 +34,7 @@ class ArloPlatform {
 
         this.config = config;
         this.api = api;
+        if (!api || api.version < 2.1) { throw new Error('Unexpected API version (less than 2.1)') }
         this.accessories = {};
         this.log = log;
 

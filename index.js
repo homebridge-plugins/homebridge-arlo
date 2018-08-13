@@ -2,6 +2,7 @@
 
 const Arlo = require('node-arlo');
 const debug = require('debug')('Homebridge-Arlo');
+const debugFFmpeg = require('debug')('ffmpeg');
 const crypto = require('crypto');
 const ip = require('ip');
 const spawn = require('child_process').spawn;
@@ -550,11 +551,6 @@ class ArloCameraSource extends EventEmitter {
     prepareStream(request, callback) {
         debug('Prepare stream request');
 
-        /*
-        this.device.getStream(function(error, data, body) {
-            this.log(body);
-            callback();
-        }.bind(this));
         var self = this;
 
         this.device.getStream(function (streamURL) {
@@ -733,30 +729,27 @@ class ArloCameraSource extends EventEmitter {
                     }
 
                     let ffmpeg = spawn(this.videoProcessor, ffmpegCommand.split(' '), {env: process.env});
-                    this.log("Start streaming video from " + this.name + " with " + width + "x" + height + "@" + vbitrate + "kBit");
-                    if(this.debug){
-                        console.log("ffmpeg " + ffmpegCommand);
-                    }
+                    debugFFmpeg("Start streaming video from " + this.device.deviceName + " with " + width + "x" + height + "@" + vbitrate + "kBit");
+                    debugFFmpeg("ffmpeg " + ffmpegCommand);
 
                     // Always setup hook on stderr.
                     // Without this streaming stops within one to two minutes.
                     ffmpeg.stderr.on('data', function(data) {
                         // Do not log to the console if debugging is turned off
-                        if(this.debug){
-                            console.log(data.toString());
-                        }
+                        debugFFmpeg(data.toString());
                     });
 
                     let self = this;
                     ffmpeg.on('error', function(error){
-                        self.log("An error occurs while making stream request");
-                        self.debug ? self.log(error) : null;
+                        debugFFmpeg("An error occurs while making stream request");
+                        debugFFmpeg(error);
                     });
+
                     ffmpeg.on('close', (code) => {
                         if(code == null || code == 0 || code == 255){
-                            self.log("Stopped streaming");
+                            debugFFmpeg("Stopped streaming");
                         } else {
-                            self.log("ERROR: FFmpeg exited with code " + code);
+                            debugFFmpeg("ERROR: FFmpeg exited with code " + code);
                             for(var i=0; i < self.streamControllers.length; i++){
                                 var controller = self.streamControllers[i];
                                 if(controller.sessionIdentifier === sessionID){

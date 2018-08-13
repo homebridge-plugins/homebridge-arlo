@@ -3,6 +3,7 @@
 const Arlo = require('node-arlo');
 const crypto = require('crypto');
 const ip = require('ip');
+const spawn = require('child_process').spawn;
 
 const EventEmitter = require('events').EventEmitter;
 

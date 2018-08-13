@@ -555,9 +555,10 @@ class ArloCameraSource extends EventEmitter {
             this.log(body);
             callback();
         }.bind(this));
-        */
+        var self = this;
 
         this.device.getStream(function (streamURL) {
+            debug('Preparing stream for URL: %s',streamURL);
 
             var sessionInfo = {};
             let sessionID = request["sessionID"];
@@ -630,7 +631,8 @@ class ArloCameraSource extends EventEmitter {
             }
 
             response["address"] = addressResp;
-            this.pendingSessions[UUIDGen.unparse(sessionID)] = sessionInfo;
+
+            self.pendingSessions[UUIDGen.unparse(sessionID)] = sessionInfo;
 
             callback(response);
         });

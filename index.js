@@ -61,8 +61,9 @@ class ArloPlatform {
         else if (deviceType === Arlo.CAMERA) {
             this.log("Found: Camera - %s [%s]", deviceName, device.id);
 
-            let accessory = new PlatformAccessory(device.id, UUIDGen.generate(device.id), Accessory.Categories.CAMERA);
+            let accessory = new PlatformAccessory(deviceName, UUIDGen.generate(device.id), Accessory.Categories.CAMERA);
 
+            
             let service = accessory.getService(Service.AccessoryInformation);
 
             service.setCharacteristic(Characteristic.Manufacturer, "Arlo")

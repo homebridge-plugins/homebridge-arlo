@@ -2,16 +2,11 @@
 
 const Arlo = require('node-arlo');
 const debug = require('debug')('Homebridge-Arlo');
-const debugFFmpeg = require('debug')('ffmpeg');
-const crypto = require('crypto');
-const ip = require('ip');
-const spawn = require('child_process').spawn;
-
-const EventEmitter = require('events').EventEmitter;
+const ArloCameraSource = require('./ArloCameraSource.js');
 
 const DEFAULT_SUBSCRIBE_TIME = 60000;
 
-let Accessory, PlatformAccessory, Characteristic, Service, StreamController, UUIDGen;
+let Accessory, PlatformAccessory, Characteristic, Service, StreamController, UUIDGen, HAP;
 
 module.exports = function (homebridge) {
     Accessory = homebridge.hap.Accessory;
@@ -20,6 +15,7 @@ module.exports = function (homebridge) {
     Service = homebridge.hap.Service;
     StreamController = homebridge.hap.StreamController;
     UUIDGen = homebridge.hap.uuid;
+    HAP = homebridge.hap;
 
     homebridge.registerPlatform('homebridge-arlo', 'Arlo', ArloPlatform, true);
 };
@@ -88,7 +84,7 @@ class ArloPlatform {
                         minStep: 180
                     });
 
-            accessory.configureCameraSource(new ArloCameraSource(this.log, accessory, device));
+            accessory.configureCameraSource(new ArloCameraSource(this.log, accessory, device, HAP, this.config.streaming));
 
             this.accessories[accessory.UUID] = new ArloCameraAccessory(this.log, accessory, device);
             this.api.publishCameraAccessories("homebridge-arlo", [accessory]);
@@ -119,7 +115,7 @@ class ArloPlatform {
                         minStep: 180
                     });
 
-            accessory.configureCameraSource(new ArloCameraSource(this.log, accessory, device));
+            accessory.configureCameraSource(new ArloCameraSource(this.log, accessory, device, HAP, this.config.streaming));
 
             accessory.addService(Service.SecuritySystem, deviceName);
 
@@ -456,331 +452,6 @@ class ArloCameraAccessory {
             .getService(Service.CameraControl)
             .getCharacteristic(Characteristic.On)
             .updateValue(privacyActive == false);
-    }
-}
-
-class ArloCameraSource extends EventEmitter {
-    constructor(log, accessory, device) {
-        super();
-        this.log = log;
-        this.accessory = accessory;
-        this.device = device;
-        this.services = [];
-        this.pendingSessions = {};
-        this.ongoingSessions = {};
-        this.streamControllers = [];
-        this.lastSnapshot = null;
-
-        this.videoProcessor = 'ffmpeg';
-        this.videoCodec = "h264_omx";
-        this.audioCodec = "libfdk_aac";
-        this.packetsize = 1316; // 188, 376
-        this.additionalCommandline = "";
-
-        let options = {
-            proxy: false, // Requires RTP/RTCP MUX Proxy
-            srtp: true, // Supports SRTP AES_CM_128_HMAC_SHA1_80 encryption
-            video: {
-                resolutions: [
-                    [1280, 720, 30],
-                    [1280, 720, 15],
-                    [640, 360, 30],
-                    [640, 360, 15],
-                    [320, 240, 30],
-                    [320, 240, 15]
-                ],
-                codec: {
-                    profiles: [0, 1, 2],    //[StreamController.VideoCodecParamProfileIDTypes.MAIN],
-                    levels: [0, 1, 2]       //[StreamController.VideoCodecParamLevelTypes.TYPE4_0]
-                }
-            },
-            audio: {
-                codecs: [
-                    {
-                        type: 'OPUS',
-                        samplerate: 24
-                    },
-                    {
-                        type: "AAC-eld",
-                        samplerate: 16
-                    }
-                ]
-            }
-        }
-
-        this._createStreamControllers(options);
-        debug('Generated Camera Controller');
-    }
-
-    handleCloseConnection(connectionID) {
-        this.streamControllers.forEach(function(controller) {
-            controller.handleCloseConnection(connectionID);
-        });
-    }
-
-    handleSnapshotRequest(request, callback) {
-        debug('Snapshot requested');
-        let now = Date.now();
-
-        if (this.lastSnapshot && now < this.lastSnapshot + 300000) {
-            this.log('Snapshot skipped: Camera %s [%s] - Next in %d secs', this.accessory.displayName, this.device.id, parseInt((this.lastSnapshot + 300000 - now) / 1000));
-            callback();
-            return;
-        }
-
-        this.log("Snapshot request: Camera %s [%s]", this.accessory.displayName, this.device.id);
-
-        this.device.getSnapshot(function(error, data) {
-            if (error) {
-                this.log(error);
-                callback();
-                return;
-            }
-
-            this.lastSnapshot = Date.now();
-
-            this.log("Snapshot confirmed: Camera %s [%s]", this.accessory.displayName, this.device.id);
-
-           this.device.once(Arlo.FF_SNAPSHOT, function(url) {
-                this.device.downloadSnapshot(url, function (data) {
-                    this.log("Snapshot downloaded: Camera %s [%s]", this.accessory.displayName, this.device.id);
-                    callback(undefined, data);
-                }.bind(this));
-            }.bind(this));
-        }.bind(this));
-    }
-
-    prepareStream(request, callback) {
-        debug('Prepare stream request');
-
-        var self = this;
-
-        this.device.getStream(function (streamURL) {
-            debug('Preparing stream for URL: %s',streamURL);
-
-            var sessionInfo = {};
-            let sessionID = request["sessionID"];
-            let targetAddress = request["targetAddress"];
-
-            sessionInfo["streamURL"] = streamURL;
-            sessionInfo["address"] = targetAddress;
-
-            var response = {};
-
-            let videoInfo = request["video"];
-            if (videoInfo) {
-                let targetPort = videoInfo["port"];
-                let srtp_key = videoInfo["srtp_key"];
-                let srtp_salt = videoInfo["srtp_salt"];
-
-                // SSRC is a 32 bit integer that is unique per stream
-                // SSRC is a 32 bit integer that is unique per stream
-                let ssrcSource = crypto.randomBytes(4);
-                ssrcSource[0] = 0;
-                let ssrc = ssrcSource.readInt32BE(0, true);
-
-                let videoResponse = {
-                    port: targetPort,
-                    ssrc: ssrc,
-                    srtp_key: srtp_key,
-                    srtp_salt: srtp_salt
-                };
-
-                response["video"] = videoResponse;
-                sessionInfo["video_port"] = targetPort;
-                sessionInfo["video_srtp"] = Buffer.concat([srtp_key, srtp_salt]);
-                sessionInfo["video_ssrc"] = ssrc;
-            }
-
-            let audioInfo = request["audio"];
-            if (audioInfo) {
-                let targetPort = audioInfo["port"];
-                let srtp_key = audioInfo["srtp_key"];
-                let srtp_salt = audioInfo["srtp_salt"];
-
-                // SSRC is a 32 bit integer that is unique per stream
-                let ssrcSource = crypto.randomBytes(4);
-                ssrcSource[0] = 0;
-                let ssrc = ssrcSource.readInt32BE(0, true);
-
-                let audioResp = {
-                    port: targetPort,
-                    ssrc: ssrc,
-                    srtp_key: srtp_key,
-                    srtp_salt: srtp_salt
-                };
-
-                response["audio"] = audioResp;
-
-                sessionInfo["audio_port"] = targetPort;
-                sessionInfo["audio_srtp"] = Buffer.concat([srtp_key, srtp_salt]);
-                sessionInfo["audio_ssrc"] = ssrc;
-            }
-
-            let currentAddress = ip.address();
-            var addressResp = {
-                address: currentAddress
-            };
-
-            if (ip.isV4Format(currentAddress)) {
-                addressResp["type"] = "v4";
-            } else {
-                addressResp["type"] = "v6";
-            }
-
-            response["address"] = addressResp;
-
-            self.pendingSessions[UUIDGen.unparse(sessionID)] = sessionInfo;
-
-            callback(response);
-        });
-    }
-
-    handleStreamRequest(request) {
-        debug('Handle stream request');
-
-        var sessionID = request["sessionID"];
-        var requestType = request["type"];
-        if (sessionID) {
-            let sessionIdentifier = UUIDGen.unparse(sessionID);
-
-            // Start streaming
-            if (requestType == "start") {
-                var sessionInfo = this.pendingSessions[sessionIdentifier];
-                if (sessionInfo) {
-                    var width = 1280;
-                    var height = 720;
-                    var fps = 30;
-                    var vbitrate = 300;
-                    var abitrate = 32;
-                    var asamplerate = 16;
-                    var vcodec = this.videoCodec;
-                    var acodec = this.audioCodec;
-                    var packetsize = this.packetsize || 1316;
-                    var additionalCommandline = this.additionalCommandline;
-
-                    let videoInfo = request["video"];
-                    if (videoInfo) {
-                        width = videoInfo["width"];
-                        height = videoInfo["height"];
-
-                        let expectedFPS = videoInfo["fps"];
-                        if (expectedFPS < fps) {
-                            fps = expectedFPS;
-                        }
-                        if(videoInfo["max_bit_rate"] < vbitrate) {
-                            vbitrate = videoInfo["max_bit_rate"];
-                        }
-                    }
-
-                    let audioInfo = request["audio"];
-                    if (audioInfo) {
-                        abitrate = audioInfo["max_bit_rate"];
-                        asamplerate = audioInfo["sample_rate"];
-                    }
-
-                    let streamURL = sessionInfo["streamURL"];
-
-                    let targetAddress = sessionInfo["address"];
-                    let targetVideoPort = sessionInfo["video_port"];
-                    let videoKey = sessionInfo["video_srtp"];
-                    let videoSsrc = sessionInfo["video_ssrc"];
-                    let targetAudioPort = sessionInfo["audio_port"];
-                    let audioKey = sessionInfo["audio_srtp"];
-                    let audioSsrc = sessionInfo["audio_ssrc"];
-
-                    let ffmpegCommand = '-re -i ' + streamURL + ' -map 0:0' +
-                      ' -vcodec ' + vcodec +
-                      ' -pix_fmt yuv420p' +
-                      ' -r ' + fps +
-                      ' -f rawvideo' +
-                      ' ' + additionalCommandline +
-                      ' -vf scale=' + width + ':' + height +
-                      ' -b:v ' + vbitrate + 'k' +
-                      ' -bufsize ' + vbitrate+ 'k' +
-                      ' -maxrate '+ vbitrate + 'k' +
-                      ' -payload_type 99' +
-                      ' -ssrc ' + videoSsrc +
-                      ' -f rtp' +
-                      ' -srtp_out_suite AES_CM_128_HMAC_SHA1_80' +
-                      ' -srtp_out_params ' + videoKey.toString('base64') +
-                      ' srtp://' + targetAddress + ':' + targetVideoPort +
-                      '?rtcpport=' + targetVideoPort +
-                      '&localrtcpport=' + targetVideoPort +
-                      '&pkt_size=' + packetsize;
-
-                    if(this.audio){
-                        ffmpegCommand+= ' -map 0:1' +
-                        ' -acodec ' + acodec +
-                        ' -profile:a aac_eld' +
-                        ' -flags +global_header' +
-                        ' -f null' +
-                        ' -ar ' + asamplerate + 'k' +
-                        ' -b:a ' + abitrate + 'k' +
-                        ' -bufsize ' + abitrate + 'k' +
-                        ' -ac 1' +
-                        ' -payload_type 110' +
-                        ' -ssrc ' + audioSsrc +
-                        ' -f rtp' +
-                        ' -srtp_out_suite AES_CM_128_HMAC_SHA1_80' +
-                        ' -srtp_out_params ' + audioKey.toString('base64') +
-                        ' srtp://' + targetAddress + ':' + targetAudioPort +
-                        '?rtcpport=' + targetAudioPort +
-                        '&localrtcpport=' + targetAudioPort +
-                        '&pkt_size=' + packetsize;
-                    }
-
-                    let ffmpeg = spawn(this.videoProcessor, ffmpegCommand.split(' '), {env: process.env});
-                    debugFFmpeg("Start streaming video from " + this.device.deviceName + " with " + width + "x" + height + "@" + vbitrate + "kBit");
-                    debugFFmpeg("ffmpeg " + ffmpegCommand);
-
-                    // Always setup hook on stderr.
-                    // Without this streaming stops within one to two minutes.
-                    ffmpeg.stderr.on('data', function(data) {
-                        // Do not log to the console if debugging is turned off
-                        debugFFmpeg(data.toString());
-                    });
-
-                    let self = this;
-                    ffmpeg.on('error', function(error){
-                        debugFFmpeg("An error occurs while making stream request");
-                        debugFFmpeg(error);
-                    });
-
-                    ffmpeg.on('close', (code) => {
-                        if(code == null || code == 0 || code == 255){
-                            debugFFmpeg("Stopped streaming");
-                        } else {
-                            debugFFmpeg("ERROR: FFmpeg exited with code " + code);
-                            for(var i=0; i < self.streamControllers.length; i++){
-                                var controller = self.streamControllers[i];
-                                if(controller.sessionIdentifier === sessionID){
-                                    controller.forceStop();
-                                }
-                            }
-                        }
-                    });
-
-                    // Add to ongoing sessions now that it's been started
-                    this.ongoingSessions[sessionIdentifier] = ffmpeg;
-                }
-                // Remove from pending sessions
-                delete this.pendingSessions[sessionIdentifier];
-            } else if (requestType == "stop") {
-                var ffmpegProcess = this.ongoingSessions[sessionIdentifier];
-                if (ffmpegProcess) {
-                    ffmpegProcess.kill('SIGTERM');
-                }
-            }
-        }
-    }
-
-    _createStreamControllers(options) {
-        //this.log("_createStreamControllers");
-        let streamController = new StreamController(1, options, this);
-
-        this.services.push(streamController.service);
-        this.streamControllers.push(streamController);
     }
 }
 

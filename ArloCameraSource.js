@@ -234,11 +234,11 @@ class ArloCameraSource extends EventEmitter {
         this.videoProcessor = config.videoProcessor || 'ffmpeg';
         this.videoDecoder = config.videoDecoder || '';
         this.videoEncoder = config.videoEncoder || 'libx264';
-        this.audioCodec = config.audioCodec || 'libfdk_aac';
-        this.packetsize = config.packetsize; // 188, 376, 1316
-        this.fps = config.maxFPS || 24;
+        this.audioCodec = config.audioEncoder || 'libfdk_aac';
+        this.packetsize = config.packetsize || 1316; //188, 376, 1316
+        this.fps = 24;
         this.maxBitrate = config.maxBitrate || 300;
-        this.additionalCommands = config.additionalCommands || '';
+        this.additionalCommands = (config.additionalCommands ? (' ' + config.additionalCommands) : '');
 
         let numberOfStreams = config.maxStreams || 2;
 
@@ -416,15 +416,15 @@ class ArloCameraSource extends EventEmitter {
                 if (sessionInfo) {
                     var width = 1280;
                     var height = 720;
-                    var fps = this.fps || 30;
+                    var fps = this.fps;
                     var vbitrate = 1500;
                     var abitrate = 32;
                     var asamplerate = 16;
                     var vDecoder = this.videoDecoder ? (' -c:v ' + this.videoDecoder) : '';
                     var vEncoder = this.videoEncoder;
                     var acodec = this.audioCodec;
-                    var packetsize = this.packetsize || 1316;
-                    var additionalCommandline = this.additionalCommandline;
+                    var packetsize = this.packetsize;
+                    var additionalCommandline = this.additionalCommands;
 
                     let videoInfo = request["video"];
                     if (videoInfo) {
@@ -464,8 +464,8 @@ class ArloCameraSource extends EventEmitter {
                     ' -pix_fmt yuv420p' +
                     ' -r ' + fps +
                     ' -f rawvideo' +
-                    //' ' + additionalCommandline +
                     ' -vf scale=' + width + ':' + height +
+                    additionalCommandline +
                     ' -b:v ' + vbitrate + 'k' +
                     ' -bufsize ' + vbitrate+ 'k' +
                     ' -maxrate '+ vbitrate + 'k' +

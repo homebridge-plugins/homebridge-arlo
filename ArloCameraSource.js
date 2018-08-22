@@ -420,16 +420,29 @@ class ArloCameraSource extends EventEmitter {
                     var vbitrate = 1500;
                     var abitrate = 32;
                     var asamplerate = 16;
-                    var vDecoder = this.videoDecoder ? (' -c:v ' + this.videoDecoder) : '';
-                    var vEncoder = this.videoEncoder;
                     var acodec = this.audioCodec;
                     var packetsize = this.packetsize;
                     var additionalCommandline = this.additionalCommands;
 
+                    var vDecoder, vEncoder, scaleCommand;
+
                     let videoInfo = request["video"];
                     if (videoInfo) {
-                        width = videoInfo["width"];
-                        height = videoInfo["height"];
+                        var width = videoInfo["width"];
+                        var height = videoInfo["height"];
+
+                        if (width == 1280 && height == 720) {
+                            // No video transcoding required, use copy codec
+                            vDecoder = '';
+                            vEncoder = 'copy';
+                            scaleCommand = '';
+                            debug('No change to video stream size required');
+                        } else {
+                            // Scale video, requiring video transcoding
+                            vDecoder = this.videoDecoder ? (' -c:v ' + this.videoDecoder) : '';
+                            vEncoder = this.videoEncoder;
+                            scaleCommand = ' -vf scale=' + width + ':' + height;
+                        }
 
                         let expectedFPS = videoInfo["fps"];
                         if (expectedFPS < fps) {
@@ -464,8 +477,8 @@ class ArloCameraSource extends EventEmitter {
                     ' -pix_fmt yuv420p' +
                     ' -r ' + fps +
                     ' -f rawvideo' +
-                    ' -vf scale=' + width + ':' + height +
-                    additionalCommandline +
+                    scaleCommand +
+                    additionalCommandline + 
                     ' -b:v ' + vbitrate + 'k' +
                     ' -bufsize ' + vbitrate+ 'k' +
                     ' -maxrate '+ vbitrate + 'k' +
@@ -500,7 +513,7 @@ class ArloCameraSource extends EventEmitter {
                     '&pkt_size=' + packetsize;
 
                     let ffmpeg = spawn(this.videoProcessor, ffmpegCommand.split(' '), {env: process.env});
-                    debugFFmpeg("Start streaming video from " + this.device.deviceName + " with " + width + "x" + height + "@" + vbitrate + "kBit");
+                    debugFFmpeg("Start streaming video with " + width + "x" + height + "@" + vbitrate + "kBit");
                     debugFFmpeg("ffmpeg " + ffmpegCommand);
 
                     // Always setup hook on stderr.

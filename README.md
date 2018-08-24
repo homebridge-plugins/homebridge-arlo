@@ -31,7 +31,7 @@ because I haven't gotten video streaming to work yet.
 
 # Configuration
 
- ```javascript
+```javascript
 "platforms": [
     {
         "platform": "Arlo",
@@ -46,6 +46,7 @@ because I haven't gotten video streaming to work yet.
 NOTE: interval time is in milliseconds - e.g. 6000 ms are 10 sec
 
 ## Optional parameters
+### Modes
 By default, Arlo only provides two modes (**armed** and **disarmed**). Since
 HomeKit allows a security system to have 4 states (**away**, **home**,
 **night** and **off**), we provide two config parameters to enable support for
@@ -69,10 +70,73 @@ via HomeKit:
 * `night_arm` - The `modeX` label for the custom mode created in Arlo for the
 **night** state.
 
+### Streaming
+Live video streaming functionality requires transcoding of the video and audio streams provided by Arlo into a format acceptable to HomeKit. By default, this transcoding is assumed to be performed by a local installation of FFmpeg with the `libx264` video codec and `libfdk_aac` audio codec. Alternate configuration options are provided to help optimize the transcoding performance.
+
+- `videoProcessor`: The video processor used to perform transcoding. Defaults to `ffmpeg`. An alternate executable maybe used, however it needs to conform to ffmpeg parameters.
+- `videoDecoder`: The video codec used to decode the incoming h264 stream from the Arlo server. Defaults to no value, meaning the default h.264 software decoder (`libx264`) will typically be used.
+- `videoEncoder`: The video codec used to encode the outgoing h264 stream to the iOS client device. Defaults to `libx264`.
+- `audioEncoder`: The audio codec that will be used to decode/encode the audio stream. HomeKit requires either an Opus or AAC-ELD format audio stream. Defaults to the `libfdk_aac` codec.
+- `packetsize`: The packet sized to be used. Defaults to 1316. Use smaller multiples of 188 to possibly improve performance (376, 564, etc)
+- `maxBitrate`: The maximum bitrate of the encoded stream in kbit/s, the default is 300.
+
+### Streaming with a Raspberry Pi 3
+
+The Raspberry Pi 3 has both hardware decoder and encoder functionality, which can help with transcoding performance. However you will need to compile FFmpeg yourself to enable the hardware capability.
+
+Even if you unconcerned with hardware transcoding, you will likely need to compile FFmpeg with either the `Opus` or `libfdk_aac` encoders enabled in order to output the required Opus or AAC-ELD audio format.
+
+The below defines suggested compliation steps for FFmpeg on Raspberry Pi 3 that takes advantage of both the hardware encoder (omx) and decoder (mmal), and uses `libopus-dev` and/or `libfdk_aac` to enable transcoding of the audio.
+
+Note: This assumes you're using Raspbian Stretch.
+
+```bash
+# Go to home folder
+cd ~
+# Install build tools
+sudo apt update
+sudo apt install build-essential pkg-config autoconf automake libtool checkinstall git
+# Install various dependencies
+sudo apt install libssl-dev libx264-dev libopus-dev libomxil-bellagio-dev
+
+# Clone libfdk-aac-dev 
+git clone https://github.com/mstorsjo/fdk-aac.git
+cd fdk-aac
+# Configure and build libfdk-aac-dev
+./autogen.sh
+./configure --prefix=/usr/local --enable-shared --enable-static
+# Uses -j4 flag to use multiple cores during compilation
+make -j4
+sudo make install
+sudo ldconfig
+cd ..
+
+# OPTIONAL: Remove any installed ffmpeg to avoid conflicts
+sudo apt remove ffmpeg
+# Clone ffmpeg
+git clone https://github.com/FFmpeg/FFmpeg.git
+cd FFmpeg
+# Configure ffmpeg
+./configure --prefix=/usr/local --arch=armel --target-os=linux --enable-openssl \
+      --enable-omx --enable-omx-rpi --enable-nonfree --enable-gpl --enable-libfdk-aac \
+      --enable-libopus --enable-mmal --enable-libx264 --enable-decoder=h264 --enable-network \
+      --enable-protocol=tcp --enable-demuxer=rtsp
+
+# Build ffmpeg
+sudo make -j4
+
+# Install ffmpeg, and use checkinstall to build a self-contained deb file that can be easily backed up for later use or reinstallation. Fill in all information requested by checkinstall.
+sudo checkinstall
+
+# Lock the custom ffmpeg package so it isn't replaced accidentally
+echo "ffmpeg hold" | sudo dpkg --set-selections
+```
+
+Thanks to KhaosT for the base ffmpeg implementation and setup instructions in [homebridge-camera-ffmpeg](https://github.com/KhaosT/homebridge-camera-ffmpeg) and the [Maniacland Blog](https://maniaclander.blogspot.com/2017/08/ffmpeg-with-pi-hardware-acceleration.html)/[locutusofborg780](https://www.reddit.com/r/raspberry_pi/comments/5677qw/hardware_accelerated_x264_encoding_with_ffmpeg/) for FFmpeg configuration instructions.
 
 ### Sample Configuration with Optional Parameters
 
- ```javascript
+```javascript
 "platforms": [
     {
         "platform": "Arlo",
@@ -81,5 +145,12 @@ via HomeKit:
         "password": "<insert arlo account password>",
         "stay_arm": "mode2",
         "night_arm": "mode3"
+        "streaming": {
+            "videoDecoder": "h264_mmal",
+            "videoEncoder": "h264_omx",
+            "packetSize": 564
+        }
+      }
     }
 ]
+```

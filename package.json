@@ -16,6 +16,8 @@
         "arlo"
     ],
     "dependencies": {
+        "debug": "3.x",
+        "ip": "1.x",
         "node-arlo": ">=0.0.7"
     }
 }

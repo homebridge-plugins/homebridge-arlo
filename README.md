@@ -76,9 +76,11 @@ Live video streaming functionality requires transcoding of the video and audio s
 - `videoProcessor`: The video processor used to perform transcoding. Defaults to `ffmpeg`. An alternate executable maybe used, however it needs to conform to ffmpeg parameters.
 - `videoDecoder`: The video codec used to decode the incoming h264 stream from the Arlo server. Defaults to no value, meaning the default h.264 software decoder (`libx264`) will typically be used.
 - `videoEncoder`: The video codec used to encode the outgoing h264 stream to the iOS client device. Defaults to `libx264`.
-- `audioEncoder`: The audio codec that will be used to decode/encode the audio stream. HomeKit requires either an Opus or AAC-ELD format audio stream. Defaults to the `libfdk_aac` codec.
+- `audioEncoder`: The audio codec that will be used to decode/encode the audio stream. HomeKit requires either an Opus or AAC-ELD format audio stream. Defaults to the `libopus` codec, and currently Homebridge-Arlo tells HomeKit it only supports the Opus audio type.
 - `packetsize`: The packet sized to be used. Defaults to 1316. Use smaller multiples of 188 to possibly improve performance (376, 564, etc)
 - `maxBitrate`: The maximum bitrate of the encoded stream in kbit/s, the default is 300.
+- `additionalVideoCommands`: Any video-specific additional flags or commands to pass to the ffmpeg executable.
+- `additionalAudioCommands`: Any audio-specific additional flags or commands to pass to the ffmpeg executable.
 
 ### Streaming with a Raspberry Pi 3
 
@@ -125,7 +127,8 @@ cd FFmpeg
 # Build ffmpeg
 sudo make -j4
 
-# Install ffmpeg, and use checkinstall to build a self-contained deb file that can be easily backed up for later use or reinstallation. Fill in all information requested by checkinstall.
+# Install ffmpeg, and use checkinstall to build a self-contained deb file that can be easily
+# backed up for later use or reinstallation. Fill in all information requested by checkinstall.
 sudo checkinstall
 
 # Lock the custom ffmpeg package so it isn't replaced accidentally
@@ -135,6 +138,8 @@ echo "ffmpeg hold" | sudo dpkg --set-selections
 Thanks to KhaosT for the base ffmpeg implementation and setup instructions in [homebridge-camera-ffmpeg](https://github.com/KhaosT/homebridge-camera-ffmpeg) and the [Maniacland Blog](https://maniaclander.blogspot.com/2017/08/ffmpeg-with-pi-hardware-acceleration.html)/[locutusofborg780](https://www.reddit.com/r/raspberry_pi/comments/5677qw/hardware_accelerated_x264_encoding_with_ffmpeg/) for FFmpeg configuration instructions.
 
 ### Sample Configuration with Optional Parameters
+
+This sample configuration specifies that for streaming transcoding, ffmpeg should use the `h264_mmal` and `h264_omx` hardware decoders/encoders for the video stream.
 
 ```javascript
 "platforms": [

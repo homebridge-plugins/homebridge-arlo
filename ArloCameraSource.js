@@ -220,8 +220,6 @@ class ArloCameraSource extends EventEmitter {
         StreamController = hap.StreamController;
         UUIDGen = hap.uuid;
 
-        debug('Streaming config: %O', config);
-
         this.log = log;
         this.accessory = accessory;
         this.device = device;
@@ -238,7 +236,8 @@ class ArloCameraSource extends EventEmitter {
         this.packetsize = config.packetsize || 1316; //188, 376, 1316
         this.fps = 24;
         this.maxBitrate = config.maxBitrate || 300;
-        this.additionalCommands = (config.additionalCommands ? (' ' + config.additionalCommands) : '');
+        this.additionalVideoCommands = (config.additionalVideoCommands ? (' ' + config.additionalVideoCommands) : '');
+        this.additionalAudioCommands = (config.additionalAudioCommands ? (' ' + config.additionalAudioCommands) : '');
 
         let numberOfStreams = config.maxStreams || 2;
 
@@ -418,7 +417,8 @@ class ArloCameraSource extends EventEmitter {
                     var asamplerate = 16;
                     var acodec = this.audioCodec;
                     var packetsize = this.packetsize;
-                    var additionalCommandline = this.additionalCommands;
+                    var additionalVideoCommands = this.additionalVideoCommands;
+                    var additionalAudioCommands = this.additionalAudioCommands;
 
                     var vDecoder, vEncoder, scaleCommand;
 
@@ -434,7 +434,7 @@ class ArloCameraSource extends EventEmitter {
                             scaleCommand = '';
                             debug('No change to video stream size required');
                         } else {
-                            // Scale video, requiring video transcoding
+                            // Scale video requested, requiring video transcoding
                             vDecoder = this.videoDecoder ? (' -c:v ' + this.videoDecoder) : '';
                             vEncoder = this.videoEncoder;
                             scaleCommand = ' -vf scale=' + width + ':' + height;
@@ -444,6 +444,7 @@ class ArloCameraSource extends EventEmitter {
                         if (expectedFPS < fps) {
                             fps = expectedFPS;
                         }
+
                         if(videoInfo["max_bit_rate"] < vbitrate) {
                             vbitrate = videoInfo["max_bit_rate"];
                         }
@@ -474,7 +475,7 @@ class ArloCameraSource extends EventEmitter {
                     ' -r ' + fps +
                     ' -f rawvideo' +
                     scaleCommand +
-                    additionalCommandline + 
+                    additionalVideoCommands + 
                     ' -b:v ' + vbitrate + 'k' +
                     ' -bufsize ' + vbitrate+ 'k' +
                     ' -maxrate '+ vbitrate + 'k' +
@@ -491,6 +492,7 @@ class ArloCameraSource extends EventEmitter {
                     // Audio
                     ffmpegCommand+= ' -map 0:0' +
                     ' -acodec ' + acodec +
+                    additionalAudioCommands + 
                     ' -flags +global_header' +
                     ' -f null' +
                     ' -ar ' + asamplerate + 'k' +

@@ -234,7 +234,7 @@ class ArloCameraSource extends EventEmitter {
         this.videoProcessor = config.videoProcessor || 'ffmpeg';
         this.videoDecoder = config.videoDecoder || '';
         this.videoEncoder = config.videoEncoder || 'libx264';
-        this.audioCodec = config.audioEncoder || 'libfdk_aac';
+        this.audioCodec = config.audioEncoder || 'libopus';
         this.packetsize = config.packetsize || 1316; //188, 376, 1316
         this.fps = 24;
         this.maxBitrate = config.maxBitrate || 300;
@@ -263,12 +263,8 @@ class ArloCameraSource extends EventEmitter {
                 codecs: [
                     {
                         type: 'OPUS',
-                        samplerate: 24
-                    },
-                    {
-
-                        type: "AAC-eld",
-                        samplerate: 16
+                        samplerate: 24,
+                        comfort_noise: true
                     }
                 ]
             }
@@ -495,12 +491,11 @@ class ArloCameraSource extends EventEmitter {
                     // Audio
                     ffmpegCommand+= ' -map 0:0' +
                     ' -acodec ' + acodec +
-                    ' -profile:a aac_eld' +
                     ' -flags +global_header' +
                     ' -f null' +
                     ' -ar ' + asamplerate + 'k' +
                     ' -b:a ' + abitrate + 'k' +
-                    ' -bufsize ' + abitrate + 'k' +
+                    ' -bufsize ' + abitrate * 2 + 'k' +
                     ' -ac 1' +
                     ' -payload_type 110' +
                     ' -ssrc ' + audioSsrc +

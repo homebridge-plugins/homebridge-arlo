@@ -1,11 +1,12 @@
 'use strict';
 
 const Arlo = require('node-arlo');
-const EventEmitter = require('events').EventEmitter;
+const debug = require('debug')('Homebridge-Arlo');
+const ArloCameraSource = require('./ArloCameraSource.js');
 
 const DEFAULT_SUBSCRIBE_TIME = 60000;
 
-let Accessory, PlatformAccessory, Characteristic, Service, StreamController, UUIDGen;
+let Accessory, PlatformAccessory, Characteristic, Service, StreamController, UUIDGen, HAP;
 
 module.exports = function (homebridge) {
     Accessory = homebridge.hap.Accessory;
@@ -14,6 +15,7 @@ module.exports = function (homebridge) {
     Service = homebridge.hap.Service;
     StreamController = homebridge.hap.StreamController;
     UUIDGen = homebridge.hap.uuid;
+    HAP = homebridge.hap;
 
     homebridge.registerPlatform('homebridge-arlo', 'Arlo', ArloPlatform, true);
 };
@@ -28,6 +30,7 @@ class ArloPlatform {
 
         this.config = config;
         this.api = api;
+        if (!api || api.version < 2.1) { throw new Error('Unexpected API version (less than 2.1)') }
         this.accessories = {};
         this.log = log;
 
@@ -55,8 +58,9 @@ class ArloPlatform {
         else if (deviceType === Arlo.CAMERA) {
             this.log("Found: Camera - %s [%s]", deviceName, device.id);
 
-            let accessory = new PlatformAccessory(device.id, UUIDGen.generate(device.id), Accessory.Categories.CAMERA);
+            let accessory = new PlatformAccessory(deviceName, UUIDGen.generate(device.id), Accessory.Categories.CAMERA);
 
+            
             let service = accessory.getService(Service.AccessoryInformation);
 
             service.setCharacteristic(Characteristic.Manufacturer, "Arlo")
@@ -69,6 +73,7 @@ class ArloPlatform {
             accessory.addService(Service.MotionSensor, deviceName);
 
             service = accessory.addService(Service.CameraControl, deviceName);
+            service = accessory.addService(Service.Microphone, deviceName);
 
             service.addCharacteristic(Characteristic.NightVision);
             service.addCharacteristic(Characteristic.ImageMirroring);
@@ -79,7 +84,7 @@ class ArloPlatform {
                         minStep: 180
                     });
 
-            accessory.configureCameraSource(new ArloCameraSource(this.log, accessory, device));
+            accessory.configureCameraSource(new ArloCameraSource(this.log, accessory, device, HAP, this.config.streaming));
 
             this.accessories[accessory.UUID] = new ArloCameraAccessory(this.log, accessory, device);
             this.api.publishCameraAccessories("homebridge-arlo", [accessory]);
@@ -110,7 +115,7 @@ class ArloPlatform {
                         minStep: 180
                     });
 
-            accessory.configureCameraSource(new ArloCameraSource(this.log, accessory, device));
+            accessory.configureCameraSource(new ArloCameraSource(this.log, accessory, device, HAP, this.config.streaming));
 
             accessory.addService(Service.SecuritySystem, deviceName);
 
@@ -447,107 +452,6 @@ class ArloCameraAccessory {
             .getService(Service.CameraControl)
             .getCharacteristic(Characteristic.On)
             .updateValue(privacyActive == false);
-    }
-}
-
-class ArloCameraSource extends EventEmitter {
-    constructor(log, accessory, device) {
-        super();
-        this.log = log;
-        this.accessory = accessory;
-        this.device = device;
-        this.services = [];
-        this.streamControllers = [];
-        this.lastSnapshot = null;
-
-        let options = {
-            proxy: false, // Requires RTP/RTCP MUX Proxy
-            srtp: true, // Supports SRTP AES_CM_128_HMAC_SHA1_80 encryption
-            video: {
-                resolutions: [
-                    [1280, 720, 30],
-                    [1280, 720, 15],
-                    [640, 360, 30],
-                    [640, 360, 15],
-                    [320, 240, 30],
-                    [320, 240, 15]
-                ],
-                codec: {
-                    profiles: [StreamController.VideoCodecParamProfileIDTypes.MAIN],
-                    levels: [StreamController.VideoCodecParamLevelTypes.TYPE4_0]
-                }
-            },
-            audio: {
-                codecs: [
-                    {
-                        type: 'OPUS',
-                        samplerate: 16
-                    }
-                ]
-            }
-        }
-
-        this._createStreamControllers(options);
-    }
-
-    handleCloseConnection(connectionID) {
-        this.streamControllers.forEach(function(controller) {
-            controller.handleCloseConnection(connectionID);
-        });
-    }
-
-    handleSnapshotRequest(request, callback) {
-        let now = Date.now();
-
-        if (this.lastSnapshot && now < this.lastSnapshot + 300000) {
-            this.log('Snapshot skipped: Camera %s [%s] - Next in %d secs', this.accessory.displayName, this.device.id, parseInt((this.lastSnapshot + 300000 - now) / 1000));
-            callback();
-            return;
-        }
-
-        this.log("Snapshot request: Camera %s [%s]", this.accessory.displayName, this.device.id);
-
-        this.device.getSnapshot(function(error, data) {
-            if (error) {
-                this.log(error);
-                callback();
-                return;
-            }
-
-            this.lastSnapshot = Date.now();
-
-            this.log("Snapshot confirmed: Camera %s [%s]", this.accessory.displayName, this.device.id);
-
-           this.device.once(Arlo.FF_SNAPSHOT, function(url) {
-                this.device.downloadSnapshot(url, function (data) {
-                    this.log("Snapshot downloaded: Camera %s [%s]", this.accessory.displayName, this.device.id);
-                    callback(undefined, data);
-                }.bind(this));
-            }.bind(this));
-        }.bind(this));
-    }
-
-    handleStreamRequest(request) {
-        this.log("handleStreamRequest");
-    }
-
-    prepareStream(request, callback) {
-        this.log("prepareStream");
-
-        /*
-        this.device.getStream(function(error, data, body) {
-            this.log(body);
-            callback();
-        }.bind(this));
-        */
-    }
-
-    _createStreamControllers(options) {
-        //this.log("_createStreamControllers");
-        let streamController = new StreamController(1, options, this);
-
-        this.services.push(streamController.service);
-        this.streamControllers.push(streamController);
     }
 }
 

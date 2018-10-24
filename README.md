@@ -37,7 +37,7 @@ because I haven't gotten video streaming to work yet.
         "platform": "Arlo",
         "name": "Arlo",
         "email": "<insert arlo account email address>",
-        "password": "<insert arlo account password>"
+        "password": "<insert arlo account password>",
         "interval": 6000 
     }
 ]

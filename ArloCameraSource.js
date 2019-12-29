@@ -206,7 +206,6 @@ Apache License
 const EventEmitter = require('events').EventEmitter;
 const debug = require('debug')('Homebridge-Arlo:CameraSource');
 const debugFFmpeg = require('debug')('ffmpeg');
-const Arlo = require('node-arlo');
 const crypto = require('crypto');
 const ip = require('ip');
 const spawn = require('child_process').spawn;
@@ -281,33 +280,12 @@ class ArloCameraSource extends EventEmitter {
 
     handleSnapshotRequest(request, callback) {
         debug('Snapshot requested');
-        let now = Date.now();
-
-        if (this.lastSnapshot && now < this.lastSnapshot + 300000) {
-            this.log('Snapshot skipped: Camera %s [%s] - Next in %d secs', this.accessory.displayName, this.device.id, parseInt((this.lastSnapshot + 300000 - now) / 1000));
-            callback();
-            return;
-        }
 
         this.log("Snapshot request: Camera %s [%s]", this.accessory.displayName, this.device.id);
 
-        this.device.getSnapshot(function(error, data) {
-            if (error) {
-                this.log(error);
-                callback();
-                return;
-            }
-
-            this.lastSnapshot = Date.now();
-
-            this.log("Snapshot confirmed: Camera %s [%s]", this.accessory.displayName, this.device.id);
-
-           this.device.once(Arlo.FF_SNAPSHOT, function(url) {
-                this.device.downloadSnapshot(url, function (data) {
-                    this.log("Snapshot downloaded: Camera %s [%s]", this.accessory.displayName, this.device.id);
-                    callback(undefined, data);
-                }.bind(this));
-            }.bind(this));
+        this.device.downloadSnapshot(this.device.device.presignedLastImageUrl, function (data) {
+            this.log("Snapshot downloaded: Camera %s [%s]", this.accessory.displayName, this.device.id);
+            callback(undefined, data);
         }.bind(this));
     }
 
@@ -413,12 +391,8 @@ class ArloCameraSource extends EventEmitter {
                     var height = 720;
                     var fps = this.fps;
                     var vbitrate = 1500;
-                    var abitrate = 32;
-                    var asamplerate = 16;
-                    var acodec = this.audioCodec;
                     var packetsize = this.packetsize;
                     var additionalVideoCommands = this.additionalVideoCommands;
-                    var additionalAudioCommands = this.additionalAudioCommands;
 
                     var vDecoder, vEncoder, scaleCommand;
 
@@ -450,26 +424,17 @@ class ArloCameraSource extends EventEmitter {
                         }
                     }
 
-                    let audioInfo = request["audio"];
-                    if (audioInfo) {
-                        abitrate = audioInfo["max_bit_rate"];
-                        asamplerate = audioInfo["sample_rate"];
-                    }
-
                     let streamURL = sessionInfo["streamURL"];
 
                     let targetAddress = sessionInfo["address"];
                     let targetVideoPort = sessionInfo["video_port"];
                     let videoKey = sessionInfo["video_srtp"];
                     let videoSsrc = sessionInfo["video_ssrc"];
-                    let targetAudioPort = sessionInfo["audio_port"];
-                    let audioKey = sessionInfo["audio_srtp"];
-                    let audioSsrc = sessionInfo["audio_ssrc"];
 
                     // Video
                     let ffmpegCommand = '-rtsp_transport tcp' +
                     vDecoder + 
-                    ' -re -i ' + streamURL + ' -map 0:1' +
+                    ' -re -i ' + streamURL + ' -map 0:0' +
                     ' -c:v ' + vEncoder +
                     ' -pix_fmt yuv420p' +
                     ' -r ' + fps +
@@ -487,26 +452,6 @@ class ArloCameraSource extends EventEmitter {
                     ' srtp://' + targetAddress + ':' + targetVideoPort +
                     '?rtcpport=' + targetVideoPort +
                     '&localrtcpport=' + targetVideoPort +
-                    '&pkt_size=' + packetsize;
-
-                    // Audio
-                    ffmpegCommand+= ' -map 0:0' +
-                    ' -acodec ' + acodec +
-                    additionalAudioCommands + 
-                    ' -flags +global_header' +
-                    ' -f null' +
-                    ' -ar ' + asamplerate + 'k' +
-                    ' -b:a ' + abitrate + 'k' +
-                    ' -bufsize ' + abitrate * 2 + 'k' +
-                    ' -ac 1' +
-                    ' -payload_type 110' +
-                    ' -ssrc ' + audioSsrc +
-                    ' -f rtp' +
-                    ' -srtp_out_suite AES_CM_128_HMAC_SHA1_80' +
-                    ' -srtp_out_params ' + audioKey.toString('base64') +
-                    ' srtp://' + targetAddress + ':' + targetAudioPort +
-                    '?rtcpport=' + targetAudioPort +
-                    '&localrtcpport=' + targetAudioPort +
                     '&pkt_size=' + packetsize;
 
                     let ffmpeg = spawn(this.videoProcessor, ffmpegCommand.split(' '), {env: process.env});

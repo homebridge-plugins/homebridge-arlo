@@ -210,6 +210,7 @@ const Arlo = require('node-arlo');
 const crypto = require('crypto');
 const ip = require('ip');
 const spawn = require('child_process').spawn;
+const pathToFfmpeg = require('ffmpeg-for-homebridge');
 
 let StreamController, UUIDGen;
 
@@ -229,7 +230,7 @@ class ArloCameraSource extends EventEmitter {
         this.streamControllers = [];
         this.lastSnapshot = null;
 
-        this.videoProcessor = config.videoProcessor || 'ffmpeg';
+        this.videoProcessor = config.videoProcessor || pathToFfmpeg || 'ffmpeg';
         this.videoDecoder = config.videoDecoder || '';
         this.videoEncoder = config.videoEncoder || 'libx264';
         this.audioCodec = config.audioEncoder || 'libopus';

@@ -1,11 +1,8 @@
 # homebridge-arlo
 
-[![npm package](https://nodei.co/npm/homebridge-arlo.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/homebridge-arlo/)
+[![npm package](https://badgen.net/npm/v/homebridge-arlo)](https://nodei.co/npm/homebridge-arlo/)
 
-[![donate](https://img.shields.io/badge/%24-Buy%20me%20a%20coffee-ff69b4.svg)](https://www.buymeacoffee.com/devbobo)
-[![Slack Channel](https://img.shields.io/badge/slack-homebridge--arlo-e01563.svg)](https://homebridgeteam.slack.com/messages/C5C0Z6XPW)
-
-Arlo platform plugin for [Homebridge](https://github.com/nfarina/homebridge).
+Arlo platform plugin for [Homebridge](https://github.com/homebridge/homebridge).
 
 # Installation
 

@@ -45,7 +45,7 @@
           "description": "The modeX label for the custom mode created in Arlo for the night state."
         },
         "include_cameras": {
-          "type": "string",
+          "type": "boolean",
           "title": "Include Cameras",
           "default": true,
           "required": true,

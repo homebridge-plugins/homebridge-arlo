@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file. This projec
 
 #### Other Changes
 * Add option to disable cameras.
+* Fix config.schema.json config types.
 
 ## v1.1.0 (2020-06-12)
 

@@ -1,24 +1,39 @@
 {
-    "name": "homebridge-arlo",
-    "version": "0.0.3",
-    "author": "David Parry <npm@introversion.com.au>",
-    "description": "Arlo platform plugin for homebridge",
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/devbobo/homebridge-arlo.git"
-    },
-    "engines": {
-        "node": ">=6",
-        "homebridge": ">=0.4.29"
-    },
+  "displayName": "Homebridge Arlo",
+  "name": "homebridge-arlo",
+  "version": "1.0.0",
+  "description": "Arlo plugin for homebridge",
+  "author": "homebridge-plugins",
+  "main": "index.js",
+  "scripts": {
+    "developer": "DEBUG=honeywell-home homebridge -D -U `pwd` -P `pwd`",
+    "lint": "jshint package.json *.js",
+    "watch": "nodemon"
+  },
+  "license": "ISC",
   "keywords": [
-        "homebridge-plugin",
-        "arlo"
-    ],
-    "dependencies": {
-        "debug": "3.x",
-        "ffmpeg-for-homebridge": "^0",
-        "ip": "1.x",
-        "node-arlo": ">=0.0.7"
-    }
+    "homebridge-plugin",
+    "arlo",
+    "homebridge"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/homebridge-plugins/homebridge-arlo.git"
+  },
+  "bugs": {
+    "url": "http://github.com/homebridge-plugins/homebridge-arlo/issues"
+  },
+  "engines": {
+    "node": ">=8.15.1",
+    "homebridge": ">=1.0.0"
+  },
+  "devDependencies": {
+    "nodemon": ">=2.0.2"
+  },
+  "dependencies": {
+    "debug": "^4.1.1",
+    "ffmpeg-for-homebridge": "0.0.5",
+    "node-arlo": ">=0.0.7",
+    "ip": "1.x"
+  }
 }

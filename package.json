@@ -6,7 +6,7 @@
   "author": "homebridge-plugins",
   "main": "index.js",
   "scripts": {
-    "developer": "DEBUG=honeywell-home homebridge -D -U `pwd` -P `pwd`",
+    "developer": "DEBUG=arlo homebridge -D -U `pwd` -P `pwd`",
     "lint": "jshint package.json *.js",
     "watch": "nodemon"
   },

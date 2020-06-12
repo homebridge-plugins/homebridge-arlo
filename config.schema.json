@@ -51,7 +51,7 @@
         "default": true,
         "required": true,
         "description": "If you would like to disable cameras, uncheck this."
-        },  
+        }  
     }
   },
   "layout": [

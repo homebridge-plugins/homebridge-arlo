@@ -31,6 +31,13 @@ class ArloPlatform {
         this.accessories = {};
         this.log = log;
 
+        this.config = this.config || {};
+
+        let include_cameras = true
+        if (this.config.include_cameras === undefined) {
+            this.config.include_cameras = true
+        }
+
         this.setupListeners();
     }
 
@@ -52,7 +59,7 @@ class ArloPlatform {
             this.accessories[accessory.UUID] = new ArloBaseStationAccessory(this.log, this.config, accessory, device);
             this.api.registerPlatformAccessories("homebridge-arlo", "Arlo", [accessory]);
         }
-        else if (deviceType === Arlo.CAMERA) {
+        else if (deviceType === Arlo.CAMERA && this.config.include_cameras === true) {
             this.log("Found: Camera - %s [%s]", deviceName, device.id);
 
             let accessory = new PlatformAccessory(device.id, UUIDGen.generate(device.id), Accessory.Categories.CAMERA);
@@ -84,7 +91,7 @@ class ArloPlatform {
             this.accessories[accessory.UUID] = new ArloCameraAccessory(this.log, accessory, device);
             this.api.publishCameraAccessories("homebridge-arlo", [accessory]);
         }
-        else if (deviceType === Arlo.Q) {
+        else if (deviceType === Arlo.Q && this.config.include_cameras === true) {
             this.log("Found: Camera - %s [%s]", device.id, device.id);
 
             let accessory = new PlatformAccessory(device.id, UUIDGen.generate(device.id), Accessory.Categories.CAMERA);
@@ -138,11 +145,11 @@ class ArloPlatform {
                     this.log("Online: Base Station %s [%s]", accessory.displayName, device.id);
                     this.accessories[uuid] = new ArloBaseStationAccessory(this.log, this.config, (accessory instanceof ArloBaseStationAccessory ? accessory.accessory : accessory), device);
                 }
-                else if(device.getType() === Arlo.CAMERA) {
+                else if(device.getType() === Arlo.CAMERA && this.config.include_cameras === true) {
                     this.log("Online: Camera %s [%s]", accessory.displayName, device.id);
                     this.accessories[uuid] = new ArloCameraAccessory(this.log, (accessory instanceof ArloCameraAccessory ? accessory.accessory : accessory), device);
                 }
-                else if(device.getType() === Arlo.Q) {
+                else if(device.getType() === Arlo.Q && this.config.include_cameras === true) {
                     this.log("Online: Camera %s [%s]", accessory.displayName, device.id);
                     this.accessories[uuid] = new ArloQAccessory(this.log, this.config, (accessory instanceof ArloQAccessory ? accessory.accessory : accessory), device);
                 }

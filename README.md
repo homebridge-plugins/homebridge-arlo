@@ -1,5 +1,7 @@
 <span align="center">
 
+<a href="https://arlo.com"><img alt="homebridge-arlo" src="https://raw.githubusercontent.com/homebridge-plugins/homebridge-arlo/update/arlo/arlo.png" width="140px"></a>
+
 # Homebridge-Arlo
 
 <a href="https://www.npmjs.com/package/homebridge-arlo"><img title="npm version" src="https://badgen.net/npm/v/homebridge-arlo" ></a>

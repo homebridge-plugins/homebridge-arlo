@@ -2,9 +2,8 @@
     "pluginAlias": "Arlo",
     "pluginType": "platform",
     "singular": true,
-    "headerDisplay": "Test.",
-    "footerDisplay": "Test.",
-    "schema": {
+    "headerDisplay": "<p align='center'><img width='250px' src='https://raw.githubusercontent.com/homebridge-plugins/homebridge-arlo/master/arlo/arlo.png'></p>\n\nThe **Homebridge Arlo** plugin allows you to control your Arlo base station.",
+    "footerDisplay": "Please raise any issues on our [project page](https://github.com/homebridge-plugins/homebridge-arlo/issues).",    "schema": {
       "type": "object",
       "properties": {
         "name": {

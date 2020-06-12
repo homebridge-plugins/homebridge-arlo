@@ -31,24 +31,31 @@
           "required": false
         },
         "stay_arm": {
-          "type": "integer",
+          "type": "string",
           "title": "Stay Arm",
           "placeholder": "modeX",
           "required": false,
           "description": "The modeX label for the custom mode created in Arlo for the home or stay state."
         },
         "night_arm": {
-          "type": "integer",
+          "type": "string",
           "title": "Night Arm",
           "placeholder": "modeX",
           "required": false,
           "description": "The modeX label for the custom mode created in Arlo for the night state."
         },
+        "include_cameras": {
+          "type": "string",
+          "title": "Include Cameras",
+          "default": true,
+          "required": true,
+          "description": "If you would like to disable cameras, uncheck this."
+        },  
         "streaming": {
           "type": "object",
           "properties": {
             "videoProcessor": {
-              "title": "Video Decoder",
+              "title": "Video Processor",
               "type": "string",
               "required": false,
               "placeholder": "ffmpeg",
@@ -115,6 +122,7 @@
         "expandable": true,
         "expanded": false,
         "items": [
+          "include_cameras",
           "streaming.videoProcessor",
           "streaming.videoDecoder",
           "streaming.videoEncoder",

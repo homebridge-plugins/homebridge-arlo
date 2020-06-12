@@ -16,6 +16,9 @@
         "arlo"
     ],
     "dependencies": {
+        "debug": "3.x",
+        "ffmpeg-for-homebridge": "^0",
+        "ip": "1.x",
         "node-arlo": ">=0.0.7"
     }
 }

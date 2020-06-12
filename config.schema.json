@@ -1,148 +1,149 @@
 {
-    "pluginAlias": "Arlo",
-    "pluginType": "platform",
-    "singular": true,
-    "headerDisplay": "<p align='center'><img width='250px' src='https://raw.githubusercontent.com/homebridge-plugins/homebridge-arlo/master/arlo/arlo.png'></p>\n\nThe **Homebridge Arlo** plugin allows you to control your Arlo base station.",
-    "footerDisplay": "Please raise any issues on our [project page](https://github.com/homebridge-plugins/homebridge-arlo/issues).",    "schema": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "title": "Name",
-          "default": "Arlo",
-          "required": true
-        },
-        "email": {
-          "type": "string",
-          "title": "E-mail",
-          "placeholder": "email@arlo.com",
-          "required": true
-        },
-        "password": {
-          "type": "string",
-          "title": "Password",
-          "placeholder": "Your Arlo Password",
-          "required": true
-        },
-        "interval": {
-          "type": "integer",
-          "title": "Interval",
-          "placeholder": "6000",
-          "required": false
-        },
-        "stay_arm": {
-          "type": "string",
-          "title": "Stay Arm",
-          "placeholder": "modeX",
-          "required": false,
-          "description": "The modeX label for the custom mode created in Arlo for the home or stay state."
-        },
-        "night_arm": {
-          "type": "string",
-          "title": "Night Arm",
-          "placeholder": "modeX",
-          "required": false,
-          "description": "The modeX label for the custom mode created in Arlo for the night state."
-        },
-        "include_cameras": {
-          "type": "boolean",
-          "title": "Include Cameras",
-          "default": true,
-          "required": true,
-          "description": "If you would like to disable cameras, uncheck this."
-        },  
-        "streaming": {
-          "type": "object",
-          "properties": {
-            "videoProcessor": {
-              "title": "Video Processor",
-              "type": "string",
-              "required": false,
-              "placeholder": "ffmpeg",
-              "description": "Default: ffmpeg, The video processor used to perform transcoding. An alternate executable maybe used, however it needs to conform to ffmpeg parameters."
-            },
-            "videoDecoder": {
-              "title": "Video Decoder",
-              "type": "string",
-              "required": false,
-              "placeholder": "libx264",
-              "description": "Default: libx264, The video codec used to decode the incoming h264 stream from the Arlo server."
-            },
-            "videoEncoder": {
-              "title": "Video Encoder",
-              "type": "string",
-              "required": false,
-              "placeholder": "libx264",
-              "description": "Default: libx264, The video codec used to encode the outgoing h264 stream to the iOS client device."
-            },
-            "audioEncoder": {
-              "title": "Video Encoder",
-              "type": "string",
-              "required": false,
-              "placeholder": "libopus",
-              "description": "Default: libopus, The audio codec that will be used to decode/encode the audio stream. HomeKit requires either an Opus or AAC-ELD format audio stream."
-            },
-            "packetSize": {
-              "title": "Packet Size",
-              "type": "string",
-              "required": false,
-              "placeholder": "1316",
-              "description": " Default: 1316, The packet sized to be used. Use smaller multiples of 188 to possibly improve performance (376, 564, etc)."
-            },
-            "maxBitrate": {
-              "title": "Packet Size",
-              "type": "string",
-              "required": false,
-              "placeholder": "300",
-              "description": "Default: 300, The maximum bitrate of the encoded stream in kbit/s."
-            },
-            "additionalVideoCommands": {
-              "title": "Packet Size",
-              "type": "string",
-              "required": false,
-              "description": "Any video-specific additional flags or commands to pass to the ffmpeg executable."
-            },
-            "additionalAudioCommands": {
-              "title": "Packet Size",
-              "type": "string",
-              "required": false,
-              "description": "Any audio-specific additional flags or commands to pass to the ffmpeg executable."
-            }
+  "pluginAlias": "Arlo",
+  "pluginType": "platform",
+  "singular": true,
+  "headerDisplay": "<p align='center'><img width='250px' src='https://raw.githubusercontent.com/homebridge-plugins/homebridge-arlo/master/arlo/arlo.png'></p>\n\nThe **Homebridge Arlo** plugin allows you to control your Arlo base station.",
+  "footerDisplay": "Please raise any issues on our [project page](https://github.com/homebridge-plugins/homebridge-arlo/issues).",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "title": "Name",
+        "default": "Arlo",
+        "required": true
+      },
+      "email": {
+        "type": "string",
+        "title": "E-mail",
+        "placeholder": "email@arlo.com",
+        "required": true
+      },
+      "password": {
+        "type": "string",
+        "title": "Password",
+        "placeholder": "Your Arlo Password",
+        "required": true
+      },
+      "interval": {
+        "type": "integer",
+        "title": "Interval",
+        "placeholder": "6000",
+        "required": false
+      },
+      "stay_arm": {
+        "type": "string",
+        "title": "Stay Arm",
+        "placeholder": "modeX",
+        "required": false,
+        "description": "The modeX label for the custom mode created in Arlo for the home or stay state."
+      },
+      "night_arm": {
+        "type": "string",
+        "title": "Night Arm",
+        "placeholder": "modeX",
+        "required": false,
+        "description": "The modeX label for the custom mode created in Arlo for the night state."
+      },
+      "include_cameras": {
+        "type": "boolean",
+        "title": "Include Cameras",
+        "default": true,
+        "required": true,
+        "description": "If you would like to disable cameras, uncheck this."
+      },
+      "streaming": {
+        "type": "object",
+        "properties": {
+          "videoProcessor": {
+            "title": "Video Processor",
+            "type": "string",
+            "required": false,
+            "placeholder": "ffmpeg",
+            "description": "Default: ffmpeg, The video processor used to perform transcoding. An alternate executable maybe used, however it needs to conform to ffmpeg parameters."
+          },
+          "videoDecoder": {
+            "title": "Video Decoder",
+            "type": "string",
+            "required": false,
+            "placeholder": "libx264",
+            "description": "Default: libx264, The video codec used to decode the incoming h264 stream from the Arlo server."
+          },
+          "videoEncoder": {
+            "title": "Video Encoder",
+            "type": "string",
+            "required": false,
+            "placeholder": "libx264",
+            "description": "Default: libx264, The video codec used to encode the outgoing h264 stream to the iOS client device."
+          },
+          "audioEncoder": {
+            "title": "Video Encoder",
+            "type": "string",
+            "required": false,
+            "placeholder": "libopus",
+            "description": "Default: libopus, The audio codec that will be used to decode/encode the audio stream. HomeKit requires either an Opus or AAC-ELD format audio stream."
+          },
+          "packetSize": {
+            "title": "Packet Size",
+            "type": "string",
+            "required": false,
+            "placeholder": "1316",
+            "description": " Default: 1316, The packet sized to be used. Use smaller multiples of 188 to possibly improve performance (376, 564, etc)."
+          },
+          "maxBitrate": {
+            "title": "Packet Size",
+            "type": "string",
+            "required": false,
+            "placeholder": "300",
+            "description": "Default: 300, The maximum bitrate of the encoded stream in kbit/s."
+          },
+          "additionalVideoCommands": {
+            "title": "Packet Size",
+            "type": "string",
+            "required": false,
+            "description": "Any video-specific additional flags or commands to pass to the ffmpeg executable."
+          },
+          "additionalAudioCommands": {
+            "title": "Packet Size",
+            "type": "string",
+            "required": false,
+            "description": "Any audio-specific additional flags or commands to pass to the ffmpeg executable."
           }
         }
       }
+    }
+  },
+  "layout": [
+    "name",
+    "email",
+    "password",
+    {
+      "type": "fieldset",
+      "title": "Streaming Settings",
+      "expandable": true,
+      "expanded": false,
+      "items": [
+        "include_cameras",
+        "streaming.videoProcessor",
+        "streaming.videoDecoder",
+        "streaming.videoEncoder",
+        "streaming.audioEncoder",
+        "streaming.packetSize",
+        "streaming.maxBitrate",
+        "streaming.additionalVideoCommands",
+        "streaming.additionalAudioCommands"
+      ]
     },
-    "layout": [
-      "name",
-      "email",
-      "password",
-      {
-        "type": "fieldset",
-        "title": "Streaming Settings",
-        "expandable": true,
-        "expanded": false,
-        "items": [
-          "include_cameras",
-          "streaming.videoProcessor",
-          "streaming.videoDecoder",
-          "streaming.videoEncoder",
-          "streaming.audioEncoder",
-          "streaming.packetSize",
-          "streaming.maxBitrate",
-          "streaming.additionalVideoCommands",
-          "streaming.additionalAudioCommands"
-        ]
-      },
-      {
-        "type": "fieldset",
-        "title": "Optional Settings",
-        "expandable": true,
-        "expanded": false,
-        "items": [
-          "interval",
-          "stay_arm",
-          "night_arm"
-        ]
-      }
-    ]
-  }
+    {
+      "type": "fieldset",
+      "title": "Optional Settings",
+      "expandable": true,
+      "expanded": false,
+      "items": [
+        "interval",
+        "stay_arm",
+        "night_arm"
+      ]
+    }
+  ]
+}

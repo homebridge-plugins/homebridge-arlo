@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file. This projec
 ## v2.0.0 (2020-06-12)
 
 ### Breaking Changes
-* Update Firmware Version to remove `Update Available`.
+* Updating plugin version to remove `Update Available`.
 
 #### Other Changes
 * Add option to disable cameras.

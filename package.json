@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Arlo",
   "name": "homebridge-arlo",
-  "version": "3.0.0",
+  "version": "2.1.0",
   "description": "Arlo plugin for homebridge",
   "author": "homebridge-plugins",
   "main": "index.js",

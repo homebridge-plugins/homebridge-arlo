@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/).
 
+## v2.1.0 (2020-06-16)
+
+### Changes
+* Add Streaming Options to `config.schema.json`.
+* Enhanced Camera Streaming. Camera Streaming still `not working` as expected though.
+
 ## v2.0.1 (2020-06-12)
 
 ### Changes

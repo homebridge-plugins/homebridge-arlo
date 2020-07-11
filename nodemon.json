@@ -4,5 +4,9 @@
   ],
   "ext": "js",
   "ignore": [],
-  "exec": "homebridge -D -I"
+  "exec": "homebridge -I -D",
+  "signal": "SIGTERM",
+  "env": {
+    "NODE_OPTIONS": "--trace-warnings"
+  }
 }

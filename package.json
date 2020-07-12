@@ -4,12 +4,12 @@
   "version": "2.0.1",
   "description": "Arlo plugin for homebridge.",
   "author": "homebridge-plugins",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "developer": "DEBUG=arlo homebridge -D -U `pwd` -P `pwd`",
     "lint": "eslint index.js && jshint package.json *.js",
     "watch": "npm run build && npm link && nodemon",
-    "build": "rimraf index.js && tsc",
+    "build": "rimraf ./dist && tsc",
     "prepublishOnly": "npm run lint && npm run build"
   },
   "license": "ISC",

@@ -7,7 +7,7 @@
   "main": "dist/index.js",
   "scripts": {
     "developer": "DEBUG=arlo homebridge -D -U `pwd` -P `pwd`",
-    "lint": "eslint index.js && jshint package.json *.js",
+    "lint": "eslint src/**.ts",
     "watch": "npm run build && npm link && nodemon",
     "build": "rimraf ./dist && tsc",
     "prepublishOnly": "npm run lint && npm run build"
@@ -30,6 +30,7 @@
     "homebridge": ">=1.0.0"
   },
   "devDependencies": {
+    "@types/ip": ">=1.1.0",
     "@types/node": "^14.0.14",
     "@typescript-eslint/eslint-plugin": "^3.4.0",
     "@typescript-eslint/parser": "^3.4.0",
@@ -43,6 +44,7 @@
   "dependencies": {
     "debug": "^4.1.1",
     "ffmpeg-for-homebridge": "0.0.5",
+    "ip": ">=1.1.5",
     "node-arlo": ">=0.0.7"
   }
 }

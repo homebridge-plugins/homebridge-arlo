@@ -1,6 +1,6 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
 
-import { PLATFORM_NAME, PLUGIN_NAME, DEFAULT_SUBSCRIBE_TIME } from './settings';
+import { PLATFORM_NAME, PLUGIN_NAME, DEFAULT_PACKET_SIZE, DEFAULT_SUBSCRIBE_TIME } from './settings';
 import * as PlatformAccessories from './accessories';
 
 import { Arlo } from 'node-arlo';
@@ -18,11 +18,6 @@ export class ArloPlatform implements DynamicPlatformPlugin {
   public readonly accessories: PlatformAccessory[] = [];
 
   public readonly arlo = new Arlo();
-
-  public readonly stayArm = Arlo.ARMED;
-  public readonly nightArm = Arlo.ARMED;
-  
-  public readonly interval = DEFAULT_SUBSCRIBE_TIME;
 
   protected readonly disabled: boolean = false;
 
@@ -43,16 +38,32 @@ export class ArloPlatform implements DynamicPlatformPlugin {
       this.config.include_cameras = true;
     }
 
-    if (this.config.stay_arm) {
-      this.stayArm = this.config.stay_arm;
+    if (!this.config.stay_arm) {
+      this.config.stay_arm = Arlo.ARMED;
     }
 
-    if (this.config.night_arm) {
-      this.nightArm = this.config.night_arm;
+    if (!this.config.night_arm) {
+      this.config.night_arm = Arlo.ARMED;
     }
 
-    if (this.config.interval) {
-      this.interval = this.config.interval;
+    if (!this.config.interval) {
+      this.config.interval = DEFAULT_SUBSCRIBE_TIME;
+    }
+
+    if (!this.config.videoProcessor) {
+      this.config.videoProcessor = require('ffmpeg-for-homebridge') || 'ffmpeg';
+    }
+
+    if (!this.config.videoDecoder) {
+      this.config.videoDecorder = '';
+    }
+
+    if (!this.config.videoEncoder) {
+      this.config.videoEncoder = 'libx264';
+    }
+
+    if (!this.config.packetSize) {
+      this.config.packetSize = DEFAULT_PACKET_SIZE;
     }
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.

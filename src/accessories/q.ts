@@ -94,10 +94,10 @@ export class ArloQAccessory extends ArloPlatformAccessory {
       this.platform.log.debug('Pushed updated current Security System state to HomeKit:', 'Disarmed');
     });
 
-    if (this.platform.stayArm !== Arlo.ARMED) {
+    if (this.platform.config.stay_arm !== Arlo.ARMED) {
       // Here we update the security system state using 
       // the `updateCharacteristic` method.
-      this.device.on(this.platform.stayArm, () => {
+      this.device.on(this.platform.config.stay_arm, () => {
         // push the new value to HomeKit
         this.services['securitySystem'].updateCharacteristic(
           this.platform.Characteristic.SecuritySystemCurrentState,
@@ -110,10 +110,10 @@ export class ArloQAccessory extends ArloPlatformAccessory {
       });
     }
 
-    if (this.platform.nightArm !== Arlo.ARMED) {
+    if (this.platform.config.night_arm !== Arlo.ARMED) {
       // Here we update the security system state using 
       // the `updateCharacteristic` method.
-      this.device.on(this.platform.nightArm, () => {
+      this.device.on(this.platform.config.night_arm, () => {
         // push the new value to HomeKit
         this.services['securitySystem'].updateCharacteristic(
           this.platform.Characteristic.SecuritySystemCurrentState,
@@ -194,7 +194,7 @@ export class ArloQAccessory extends ArloPlatformAccessory {
 
     setInterval(() => {
       this.device.get();
-    }, this.platform.interval);
+    }, this.platform.config.interval);
 
     this.device.get();
 
@@ -280,8 +280,8 @@ export class ArloQAccessory extends ArloPlatformAccessory {
 
     switch (value) {
       case this.platform.Characteristic.SecuritySystemTargetState.STAY_ARM:
-        this.device.setMode(this.platform.stayArm, () => {
-          this.device.emit(this.platform.stayArm);
+        this.device.setMode(this.platform.config.stay_arm, () => {
+          this.device.emit(this.platform.config.stay_arm);
         });
         break;
       case this.platform.Characteristic.SecuritySystemTargetState.AWAY_ARM:
@@ -290,8 +290,8 @@ export class ArloQAccessory extends ArloPlatformAccessory {
         });
         break;
       case this.platform.Characteristic.SecuritySystemTargetState.NIGHT_ARM:
-        this.device.arm(this.platform.nightArm, () => {
-          this.device.emit(this.platform.nightArm);
+        this.device.arm(this.platform.config.night_arm, () => {
+          this.device.emit(this.platform.config.night_arm);
         });
         break;
       case this.platform.Characteristic.SecuritySystemTargetState.DISARM:

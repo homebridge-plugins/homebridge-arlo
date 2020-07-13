@@ -14,6 +14,21 @@ export const PLUGIN_NAME = 'homebridge-arlo';
 export const MANUFACTURER = 'Arlo';
 
 /**
+ * This is the frames per second.
+ */
+export const FRAMES_PER_SECOND = 24;
+
+/**
+ * This is the default maximum number of streams.
+ */
+export const DEFAULT_MAX_STREAMS = 2;
+
+/**
+ * This is the default packet size.
+ */
+export const DEFAULT_PACKET_SIZE = 1316;
+
+/**
  * This is the default subscribe time.
  */
 export const DEFAULT_SUBSCRIBE_TIME = 60000;

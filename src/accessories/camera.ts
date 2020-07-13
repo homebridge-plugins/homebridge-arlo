@@ -156,7 +156,7 @@ export class ArloCameraAccessory extends ArloPlatformAccessory {
 
     setInterval(() => {
       this.device.get();
-    }, this.platform.interval);
+    }, this.platform.config.interval);
 
     this.device.get();
 

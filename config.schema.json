@@ -77,7 +77,7 @@
             "description": "Default: libx264, The video codec used to encode the outgoing h264 stream to the iOS client device."
           },
           "audioEncoder": {
-            "title": "Video Encoder",
+            "title": "Audio Encoder",
             "type": "string",
             "required": false,
             "placeholder": "libopus",

@@ -1,8 +1,8 @@
 {
   "displayName": "Homebridge Arlo",
   "name": "homebridge-arlo",
-  "version": "2.0.1",
-  "description": "Arlo plugin for homebridge.",
+  "version": "2.1.0",
+  "description": "Arlo plugin for homebridge",
   "author": "homebridge-plugins",
   "main": "dist/index.js",
   "scripts": {
@@ -43,8 +43,8 @@
   },
   "dependencies": {
     "debug": "^4.1.1",
-    "ffmpeg-for-homebridge": "0.0.5",
-    "ip": ">=1.1.5",
-    "node-arlo": ">=0.0.7"
+    "ffmpeg-for-homebridge": ">=0.0.5",
+    "node-arlo": ">=1.2.0",
+    "ip": ">=1.1.5"
   }
 }

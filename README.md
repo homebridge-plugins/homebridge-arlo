@@ -1,6 +1,6 @@
 <span align="center">
   <a href="https://arlo.com">
-    <img alt="arlo" src="https://github.com/homebridge-plugins/homebridge-arlo/raw/master/logos/arlo-wordmark-logo-vertical.png" height="150">
+    <img alt="arlo" src="https://github.com/homebridge-plugins/homebridge-arlo/raw/master/logos/arlo-wordmark-logo-vertical.png" height="150px">
   </a>
 
   # Homebridge-Arlo

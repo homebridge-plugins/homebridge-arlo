@@ -3,7 +3,7 @@ import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, 
 import { PLATFORM_NAME, PLUGIN_NAME, DEFAULT_PACKET_SIZE, DEFAULT_SUBSCRIBE_TIME } from './settings';
 import * as PlatformAccessories from './accessories';
 
-import { Arlo } from 'node-arlo';
+import { default as Arlo } from 'node-arlo';
 
 /**
  * HomebridgePlatform

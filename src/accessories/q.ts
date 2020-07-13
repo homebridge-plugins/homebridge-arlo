@@ -4,7 +4,7 @@ import { ArloPlatform } from '../platform';
 import { ArloPlatformAccessory } from './platform';
 import { ArloCameraSource } from './cameraSource';
 
-import { Arlo } from 'node-arlo';
+import { default as Arlo } from 'node-arlo';
 
 /**
  * Platform Accessory

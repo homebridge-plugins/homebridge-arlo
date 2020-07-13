@@ -1,6 +1,6 @@
 <span align="center">
   <a href="https://arlo.com">
-    <img alt="homebridge-arlo" src="https://raw.githubusercontent.com/homebridge-plugins/homebridge-arlo/master/arlo/arlo.png" width="140px">
+    <img alt="arlo" src="https://github.com/homebridge-plugins/homebridge-arlo/raw/master/logos/arlo-wordmark-logo-vertical.png" height="150px">
   </a>
 
   # Homebridge-Arlo
@@ -9,7 +9,16 @@
     <img title="npm version" src="https://badgen.net/npm/v/homebridge-arlo">
   </a>
   <a href="https://www.npmjs.com/package/homebridge-arlo">
-    <img title="npm downloads" src="https://badgen.net/npm/dt/homebridge-arlo">
+    <img title="npm total downloads" src="https://badgen.net/npm/dt/homebridge-arlo">
+  </a>
+  <a href="https://www.npmjs.com/package/homebridge-arlo">
+    <img title="npm license" src="https://badgen.net/npm/license/homebridge-arlo">
+  </a>
+  <a href="https://www.npmjs.com/package/homebridge-arlo">
+    <img title="npm node version" src="https://badgen.net/npm/node/homebridge-arlo">
+  </a>
+  <a href="https://www.npmjs.com/package/homebridge-arlo">
+    <img title="npm types" src="https://badgen.net/npm/types/homebridge-arlo">
   </a>
 
   <p>

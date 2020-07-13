@@ -3,7 +3,8 @@ import { Service, PlatformAccessory, CharacteristicValue, CharacteristicSetCallb
 import { ArloPlatform } from '../platform';
 import { ArloPlatformAccessory } from './platform';
 
-import { Arlo } from 'node-arlo';
+
+import { default as Arlo } from 'node-arlo';
 
 /**
  * Platform Accessory

@@ -44,7 +44,7 @@
   "dependencies": {
     "debug": "^4.1.1",
     "ffmpeg-for-homebridge": ">=0.0.5",
-    "node-arlo": ">=1.2.0",
+    "node-arlo": ">=1.2.1-beta.1",
     "ip": ">=1.1.5"
   }
 }

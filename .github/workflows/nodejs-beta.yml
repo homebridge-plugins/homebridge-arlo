@@ -12,14 +12,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.3.1
-      - uses: actions/setup-node@v2.1.0
+      - uses: actions/checkout@v2.2.0
+      - uses: actions/setup-node@v2-beta
         with:
           node-version: 10
       - name: npm install, build and test
         run: |
           npm ci
           npm run build --if-present
+          npm lint
           npm test
         env:
           CI: true
@@ -32,8 +33,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2.3.1
-      - uses: actions/setup-node@v2.1.0
+      - uses: actions/checkout@v2.2.0
+      - uses: actions/setup-node@v2-beta
         with:
           node-version: 10
           registry-url: https://registry.npmjs.org/

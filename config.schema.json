@@ -2,7 +2,7 @@
   "pluginAlias": "Arlo",
   "pluginType": "platform",
   "singular": true,
-  "headerDisplay": "<p align='center'><img width='250px' src='https://raw.githubusercontent.com/homebridge-plugins/homebridge-arlo/master/arlo/arlo.png'></p>\n\nThe **Homebridge Arlo** plugin allows you to control your Arlo base station.",
+  "headerDisplay": "<p align='center'><img width='250px' src='https://github.com/homebridge-plugins/homebridge-arlo/raw/master/logos/arlo-wordmark-logo-vertical.png'></p>\n\nThe **Homebridge Arlo** plugin allows you to control your Arlo base station.",
   "footerDisplay": "Please raise any issues on our [project page](https://github.com/homebridge-plugins/homebridge-arlo/issues).",
   "schema": {
     "type": "object",
@@ -117,23 +117,7 @@
     "name",
     "email",
     "password",
-    {
-      "type": "fieldset",
-      "title": "Streaming Settings",
-      "expandable": true,
-      "expanded": false,
-      "items": [
-        "include_cameras",
-        "streaming.videoProcessor",
-        "streaming.videoDecoder",
-        "streaming.videoEncoder",
-        "streaming.audioEncoder",
-        "streaming.packetSize",
-        "streaming.maxBitrate",
-        "streaming.additionalVideoCommands",
-        "streaming.additionalAudioCommands"
-      ]
-    },
+    "include_cameras",
     {
       "type": "fieldset",
       "title": "Optional Settings",

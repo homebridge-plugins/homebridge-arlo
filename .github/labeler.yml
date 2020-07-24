@@ -1,9 +1,5 @@
-# Add 'server' to any changes within 'server' folder or any subfolders
-server:
-  - server/**/*
-
 # Add 'branding' to any file changes within 'honeywell' folder
-branding: arlo/*
+branding: logos/*
 
 # Add 'repo' label to any root file changes
 repo:

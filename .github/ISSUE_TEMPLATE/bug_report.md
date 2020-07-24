@@ -1,13 +1,13 @@
 ---
 name: Bug Report
-about: Create a report to help us improve
+about: Raise a bug related to Homebridge Arlo.
 title: ''
 labels: bug
 assignees: ''
 
 ---
 
-<!-- You must use the issue template below when submitting a bug -->
+<!-- Provide a general summary in the Title above -->
 
 **Describe The Bug:**
 <!-- A clear and concise description of what the bug is. -->
@@ -18,19 +18,24 @@ assignees: ''
 **Expected behavior:**
 <!-- A clear and concise description of what you expected to happen. -->
 
-**Logs:**
-<!-- Bug reports that do not contain logs may be closed without warning. -->
+[**Logs:**]()
+<!-- Please paste any relevant log output into a gist or using hastebin-->
+<!-- If using hastebin or other text sharing website please make the lifespan long-->
+<!-- Paste the link between the two () above -->
+<!-- Remove any sensitive information, passwords, etc. -->
+<!-- Please include the beginning of the log where the homebridge Arlo initialization happens -->
+<!-- If needing to link multiple log files please do so between the ``` lines below -->
 
 ```
-Show the Homebridge logs here.
-Remove any sensitive information.
+Secondary Homebridge Logs here
 ```
 
 **Homebridge Config:**
+<!-- Paste relevant output between the two ``` lines below -->
+<!-- Remove any sensitive information, passwords, etc. -->
 
 ```json
-Show your homebridge config.json here.
-Remove any sensitive information, such as your homebridge-gsh / google-smarthome token.
+Show your homebridge config.json here
 ```
 
 **Screenshots:**
@@ -41,9 +46,7 @@ Remove any sensitive information, such as your homebridge-gsh / google-smarthome
 * **Node.js Version**: <!-- node -v -->
 * **NPM Version**: <!-- npm -v -->
 * **Homebridge Version**: <!-- homebridge -V -->
-* **Homebridge Honeywell Home Version**:
-* **Homebridge Config UI X Plugin Version**:
-* **Operating System**: <!-- Raspbian / Ubuntu / Debian / Windows / macOS / Docker -->
-
+* **Operating System**: Raspbian / Ubuntu / Debian / Windows / macOS / Docker / other
+* **Process Supervisor**: Systemd / init.d / pm2 / launchctl / Docker / hb-service / other / none
 
 <!-- Click the "Preview" tab before you submit to ensure the formatting is correct. -->

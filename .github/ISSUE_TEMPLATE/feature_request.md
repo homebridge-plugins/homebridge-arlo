@@ -1,20 +1,29 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
+name: Feature Request
+about: Raise a feature request related to Homebridge Arlo.
 title: ''
-labels: ''
+labels: feature
 assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+<!-- Provide a general summary in the Title above -->
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+**Describe The Bug:**
+<!-- A clear and concise description of what the bug is. -->
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**Expected behavior:**
+<!-- A clear and concise description of what you expected to happen. -->
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+**Homebridge Config:**
+<!-- Paste relevant output between the two ``` lines below -->
+<!-- Remove any sensitive information, passwords, etc. -->
+
+```json
+Show your homebridge config.json here
+```
+
+**Screenshots:**
+<!-- If applicable, add screenshots to help explain your problem. -->
+
+<!-- Click the "Preview" tab before you submit to ensure the formatting is correct. -->

@@ -32,8 +32,8 @@
   },
   "dependencies": {
     "debug": "^4.1.1",
-    "ffmpeg-for-homebridge": ">=0.0.5",
-    "node-arlo": ">=1.2.0",
-    "ip": ">=1.1.5"
+    "ffmpeg-for-homebridge": "^0.0.5",
+    "node-arlo": "^1.3.2",
+    "ip": "^1.1.5"
   }
 }

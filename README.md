@@ -15,11 +15,13 @@
 </span>
 
 ## Installation
-* Install [config-ui-x](https://github.com/oznu/homebridge-config-ui-x).
-* Search for "Arlo" on the Plugin Screen of [config-ui-x](https://github.com/oznu/homebridge-config-ui-x) .
-* Click Install on Homebridge Arlo.
+
+- Install [config-ui-x](https://github.com/oznu/homebridge-config-ui-x).
+- Search for "Arlo" on the Plugin Screen of [config-ui-x](https://github.com/oznu/homebridge-config-ui-x) .
+- Click Install on Homebridge Arlo.
 
 ## Configuration
+
 Arlo only allows a single login to each account at a time, as a result, if you
 are running Homebridge and the Arlo on the same account... logging in on your
 iPhone to view cameras will log out homebridge's Arlo access.
@@ -29,4 +31,4 @@ for homebridge access.
 
 ## Manual Setup
 
-  Visit Manual Setup [Wiki](https://github.com/homebridge-plugins/homebridge-arlo/wiki/Manual-Setup).
+Visit Manual Setup [Wiki](https://github.com/homebridge-plugins/homebridge-arlo/wiki/Manual-Setup).

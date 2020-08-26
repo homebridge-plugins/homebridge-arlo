@@ -1,724 +1,894 @@
-'use strict';
+"use strict";
 
-const Arlo = require('node-arlo');
-const debug = require('debug')('Homebridge-Arlo');
-const ArloCameraSource = require('./ArloCameraSource.js');
+const Arlo = require("node-arlo");
+const debug = require("debug")("Homebridge-Arlo");
+const ArloCameraSource = require("./ArloCameraSource.js");
 
 const DEFAULT_SUBSCRIBE_TIME = 60000;
 
-let Accessory, PlatformAccessory, Characteristic, Service, StreamController, UUIDGen, HAP;
+let Accessory,
+  PlatformAccessory,
+  Characteristic,
+  Service,
+  StreamController,
+  UUIDGen,
+  HAP;
 
 module.exports = function (homebridge) {
-    Accessory = homebridge.hap.Accessory;
-    PlatformAccessory = homebridge.platformAccessory;
-    Characteristic = homebridge.hap.Characteristic;
-    Service = homebridge.hap.Service;
-    StreamController = homebridge.hap.StreamController;
-    UUIDGen = homebridge.hap.uuid;
-    HAP = homebridge.hap;
+  Accessory = homebridge.hap.Accessory;
+  PlatformAccessory = homebridge.platformAccessory;
+  Characteristic = homebridge.hap.Characteristic;
+  Service = homebridge.hap.Service;
+  StreamController = homebridge.hap.StreamController;
+  UUIDGen = homebridge.hap.uuid;
+  HAP = homebridge.hap;
 
-    homebridge.registerPlatform('homebridge-arlo', 'Arlo', ArloPlatform, true);
+  homebridge.registerPlatform("homebridge-arlo", "Arlo", ArloPlatform, true);
 };
 
 class ArloPlatform {
-    constructor(log, config, api) {
-        if (!config) {
-            log.warn("Ignoring Arlo Platform setup because it is not configured");
-            this.disabled = true;
-            return;
-        }
-
-        this.config = config;
-        this.api = api;
-        if (!api || api.version < 2.1) { throw new Error('Unexpected API version (less than 2.1)') }
-        this.accessories = {};
-        this.log = log;
-
-        this.config = this.config || {};
-
-        let include_cameras = true
-        if (this.config.include_cameras === undefined) {
-            this.config.include_cameras = true
-        }
-
-        this.setupListeners();
+  constructor(log, config, api) {
+    if (!config) {
+      log.warn("Ignoring Arlo Platform setup because it is not configured");
+      this.disabled = true;
+      return;
     }
 
-    addAccessory(device) {
-        let deviceName  = device.getName(),
-            deviceModel = device.getModel(),
-            deviceType  = device.getType();
+    this.config = config;
+    this.api = api;
+    if (!api || api.version < 2.1) {
+      throw new Error("Unexpected API version (less than 2.1)");
+    }
+    this.accessories = {};
+    this.log = log;
 
-        if (deviceType === Arlo.BASESTATION) {
-            this.log("Found: Base Station - %s [%s]", deviceName, device.id);
+    this.config = this.config || {};
 
-            let accessory = new PlatformAccessory(deviceName, UUIDGen.generate(device.id));
-
-            accessory.getService(Service.AccessoryInformation)
-                .setCharacteristic(Characteristic.Manufacturer, "Arlo");
-
-            accessory.addService(Service.SecuritySystem, deviceName);
-
-            this.accessories[accessory.UUID] = new ArloBaseStationAccessory(this.log, this.config, accessory, device);
-            this.api.registerPlatformAccessories("homebridge-arlo", "Arlo", [accessory]);
-        }
-        else if (deviceType === Arlo.CAMERA && this.config.include_cameras === true) {
-            this.log("Found: Camera - %s [%s]", deviceName, device.id);
-
-            let accessory = new PlatformAccessory(deviceName, UUIDGen.generate(device.id), Accessory.Categories.CAMERA);
-
-            
-            let service = accessory.getService(Service.AccessoryInformation);
-
-            service.setCharacteristic(Characteristic.Manufacturer, "Arlo")
-                   .setCharacteristic(Characteristic.Model, deviceModel);
-
-            service.getCharacteristic(Characteristic.FirmwareRevision);
-            service.getCharacteristic(Characteristic.HardwareRevision);
-
-            accessory.addService(Service.BatteryService, deviceName);
-            accessory.addService(Service.MotionSensor, deviceName);
-
-            service = accessory.addService(Service.CameraControl, deviceName);
-            service = accessory.addService(Service.Microphone, deviceName);
-
-            service.addCharacteristic(Characteristic.NightVision);
-            service.addCharacteristic(Characteristic.ImageMirroring);
-            service.addCharacteristic(Characteristic.ImageRotation)
-                    .setProps({
-                        maxValue: 180,
-                        minValue: 0,
-                        minStep: 180
-                    });
-
-            accessory.configureCameraSource(new ArloCameraSource(this.log, accessory, device, HAP, this.config.streaming));
-
-            this.accessories[accessory.UUID] = new ArloCameraAccessory(this.log, accessory, device);
-            this.api.publishCameraAccessories("homebridge-arlo", [accessory]);
-        }
-        else if (deviceType === Arlo.Q && this.config.include_cameras === true) {
-            this.log("Found: Camera - %s [%s]", device.id, device.id);
-
-            let accessory = new PlatformAccessory(device.id, UUIDGen.generate(device.id), Accessory.Categories.CAMERA);
-
-            let service = accessory.getService(Service.AccessoryInformation);
-
-            service.setCharacteristic(Characteristic.Manufacturer, "Arlo")
-                   .setCharacteristic(Characteristic.Model, deviceModel);
-
-            service.getCharacteristic(Characteristic.FirmwareRevision);
-            service.getCharacteristic(Characteristic.HardwareRevision);
-
-            accessory.addService(Service.MotionSensor, deviceName);
-
-            service = accessory.addService(Service.CameraControl, deviceName);
-
-            service.addCharacteristic(Characteristic.NightVision);
-            service.addCharacteristic(Characteristic.ImageMirroring);
-            service.addCharacteristic(Characteristic.ImageRotation)
-                    .setProps({
-                        maxValue: 180,
-                        minValue: 0,
-                        minStep: 180
-                    });
-
-            accessory.configureCameraSource(new ArloCameraSource(this.log, accessory, device, HAP, this.config.streaming));
-
-            accessory.addService(Service.SecuritySystem, deviceName);
-
-            this.accessories[accessory.UUID] = new ArloQAccessory(this.log, this.config, accessory, device);
-            this.api.publishCameraAccessories("homebridge-arlo", [accessory]);
-        }
+    let include_cameras = true;
+    if (this.config.include_cameras === undefined) {
+      this.config.include_cameras = true;
     }
 
-    configureAccessory(accessory) {
-        this.accessories[accessory.UUID] = accessory;
+    this.setupListeners();
+  }
+
+  addAccessory(device) {
+    let deviceName = device.getName(),
+      deviceModel = device.getModel(),
+      deviceType = device.getType();
+
+    if (deviceType === Arlo.BASESTATION) {
+      this.log("Found: Base Station - %s [%s]", deviceName, device.id);
+
+      let accessory = new PlatformAccessory(
+        deviceName,
+        UUIDGen.generate(device.id)
+      );
+
+      accessory
+        .getService(Service.AccessoryInformation)
+        .setCharacteristic(Characteristic.Manufacturer, "Arlo");
+
+      accessory.addService(Service.SecuritySystem, deviceName);
+
+      this.accessories[accessory.UUID] = new ArloBaseStationAccessory(
+        this.log,
+        this.config,
+        accessory,
+        device
+      );
+      this.api.registerPlatformAccessories("homebridge-arlo", "Arlo", [
+        accessory,
+      ]);
+    } else if (
+      deviceType === Arlo.CAMERA &&
+      this.config.include_cameras === true
+    ) {
+      this.log("Found: Camera - %s [%s]", deviceName, device.id);
+
+      let accessory = new PlatformAccessory(
+        deviceName,
+        UUIDGen.generate(device.id),
+        Accessory.Categories.CAMERA
+      );
+
+      let service = accessory.getService(Service.AccessoryInformation);
+
+      service
+        .setCharacteristic(Characteristic.Manufacturer, "Arlo")
+        .setCharacteristic(Characteristic.Model, deviceModel);
+
+      service.getCharacteristic(Characteristic.FirmwareRevision);
+      service.getCharacteristic(Characteristic.HardwareRevision);
+
+      accessory.addService(Service.BatteryService, deviceName);
+      accessory.addService(Service.MotionSensor, deviceName);
+
+      service = accessory.addService(Service.CameraControl, deviceName);
+      service = accessory.addService(Service.Microphone, deviceName);
+
+      service.addCharacteristic(Characteristic.NightVision);
+      service.addCharacteristic(Characteristic.ImageMirroring);
+      service.addCharacteristic(Characteristic.ImageRotation).setProps({
+        maxValue: 180,
+        minValue: 0,
+        minStep: 180,
+      });
+
+      accessory.configureCameraSource(
+        new ArloCameraSource(
+          this.log,
+          accessory,
+          device,
+          HAP,
+          this.config.streaming
+        )
+      );
+
+      this.accessories[accessory.UUID] = new ArloCameraAccessory(
+        this.log,
+        accessory,
+        device
+      );
+      this.api.publishCameraAccessories("homebridge-arlo", [accessory]);
+    } else if (deviceType === Arlo.Q && this.config.include_cameras === true) {
+      this.log("Found: Camera - %s [%s]", device.id, device.id);
+
+      let accessory = new PlatformAccessory(
+        device.id,
+        UUIDGen.generate(device.id),
+        Accessory.Categories.CAMERA
+      );
+
+      let service = accessory.getService(Service.AccessoryInformation);
+
+      service
+        .setCharacteristic(Characteristic.Manufacturer, "Arlo")
+        .setCharacteristic(Characteristic.Model, deviceModel);
+
+      service.getCharacteristic(Characteristic.FirmwareRevision);
+      service.getCharacteristic(Characteristic.HardwareRevision);
+
+      accessory.addService(Service.MotionSensor, deviceName);
+
+      service = accessory.addService(Service.CameraControl, deviceName);
+
+      service.addCharacteristic(Characteristic.NightVision);
+      service.addCharacteristic(Characteristic.ImageMirroring);
+      service.addCharacteristic(Characteristic.ImageRotation).setProps({
+        maxValue: 180,
+        minValue: 0,
+        minStep: 180,
+      });
+
+      accessory.configureCameraSource(
+        new ArloCameraSource(
+          this.log,
+          accessory,
+          device,
+          HAP,
+          this.config.streaming
+        )
+      );
+
+      accessory.addService(Service.SecuritySystem, deviceName);
+
+      this.accessories[accessory.UUID] = new ArloQAccessory(
+        this.log,
+        this.config,
+        accessory,
+        device
+      );
+      this.api.publishCameraAccessories("homebridge-arlo", [accessory]);
     }
+  }
 
-    setupListeners() {
-        this.api.on('didFinishLaunching', function() {
-            var arlo = new Arlo();
+  configureAccessory(accessory) {
+    this.accessories[accessory.UUID] = accessory;
+  }
 
-            arlo.on(Arlo.FOUND, function(device) {
-                let uuid = UUIDGen.generate(device.id);
-                let accessory = this.accessories[uuid];
+  setupListeners() {
+    this.api.on(
+      "didFinishLaunching",
+      function () {
+        var arlo = new Arlo();
 
-                if (accessory === undefined) {
-                    this.addAccessory(device);
-                }
-                else if(device.getType() === Arlo.BASESTATION) {
-                    this.log("Online: Base Station %s [%s]", accessory.displayName, device.id);
-                    this.accessories[uuid] = new ArloBaseStationAccessory(this.log, this.config, (accessory instanceof ArloBaseStationAccessory ? accessory.accessory : accessory), device);
-                }
-                else if(device.getType() === Arlo.CAMERA && this.config.include_cameras === true) {
-                    this.log("Online: Camera %s [%s]", accessory.displayName, device.id);
-                    this.accessories[uuid] = new ArloCameraAccessory(this.log, (accessory instanceof ArloCameraAccessory ? accessory.accessory : accessory), device);
-                }
-                else if(device.getType() === Arlo.Q && this.config.include_cameras === true) {
-                    this.log("Online: Camera %s [%s]", accessory.displayName, device.id);
-                    this.accessories[uuid] = new ArloQAccessory(this.log, this.config, (accessory instanceof ArloQAccessory ? accessory.accessory : accessory), device);
-                }
-            }.bind(this));
+        arlo.on(
+          Arlo.FOUND,
+          function (device) {
+            let uuid = UUIDGen.generate(device.id);
+            let accessory = this.accessories[uuid];
 
-            arlo.login(this.config.email, this.config.password);
-        }.bind(this));
-    }
+            if (accessory === undefined) {
+              this.addAccessory(device);
+            } else if (device.getType() === Arlo.BASESTATION) {
+              this.log(
+                "Online: Base Station %s [%s]",
+                accessory.displayName,
+                device.id
+              );
+              this.accessories[uuid] = new ArloBaseStationAccessory(
+                this.log,
+                this.config,
+                accessory instanceof ArloBaseStationAccessory
+                  ? accessory.accessory
+                  : accessory,
+                device
+              );
+            } else if (
+              device.getType() === Arlo.CAMERA &&
+              this.config.include_cameras === true
+            ) {
+              this.log(
+                "Online: Camera %s [%s]",
+                accessory.displayName,
+                device.id
+              );
+              this.accessories[uuid] = new ArloCameraAccessory(
+                this.log,
+                accessory instanceof ArloCameraAccessory
+                  ? accessory.accessory
+                  : accessory,
+                device
+              );
+            } else if (
+              device.getType() === Arlo.Q &&
+              this.config.include_cameras === true
+            ) {
+              this.log(
+                "Online: Camera %s [%s]",
+                accessory.displayName,
+                device.id
+              );
+              this.accessories[uuid] = new ArloQAccessory(
+                this.log,
+                this.config,
+                accessory instanceof ArloQAccessory
+                  ? accessory.accessory
+                  : accessory,
+                device
+              );
+            }
+          }.bind(this)
+        );
+
+        arlo.login(this.config.email, this.config.password);
+      }.bind(this)
+    );
+  }
 }
 
 class ArloBaseStationAccessory {
-    constructor(log, config, accessory, device) {
-        this.accessory = accessory;
-        this.device = device;
-        this.log = log;
-        
-        config = config || {};
+  constructor(log, config, accessory, device) {
+    this.accessory = accessory;
+    this.device = device;
+    this.log = log;
 
-        this.STAY_ARM = config.stay_arm || Arlo.ARMED;
-        this.NIGHT_ARM = config.night_arm || Arlo.ARMED;
-        this.interval = config.interval || DEFAULT_SUBSCRIBE_TIME;
+    config = config || {};
+
+    this.STAY_ARM = config.stay_arm || Arlo.ARMED;
+    this.NIGHT_ARM = config.night_arm || Arlo.ARMED;
+    this.interval = config.interval || DEFAULT_SUBSCRIBE_TIME;
+
+    this.accessory
+      .getService(Service.AccessoryInformation)
+      .setCharacteristic(Characteristic.Model, device.getModel())
+      .setCharacteristic(Characteristic.SerialNumber, device.getSerialNumber());
+
+    this.setupListeners();
+    this.accessory.updateReachability(true);
+  }
+
+  setupListeners() {
+    this.accessory
+      .getService(Service.SecuritySystem)
+      .getCharacteristic(Characteristic.SecuritySystemTargetState)
+      .on("set", this.setTargetState.bind(this));
+
+    this.device.on(
+      Arlo.ARMED,
+      function () {
+        this.accessory
+          .getService(Service.SecuritySystem)
+          .getCharacteristic(Characteristic.SecuritySystemTargetState)
+          .updateValue(Characteristic.SecuritySystemTargetState.AWAY_ARM);
 
         this.accessory
-            .getService(Service.AccessoryInformation)
-            .setCharacteristic(Characteristic.Model, device.getModel())
-            .setCharacteristic(Characteristic.SerialNumber, device.getSerialNumber());
+          .getService(Service.SecuritySystem)
+          .getCharacteristic(Characteristic.SecuritySystemCurrentState)
+          .updateValue(Characteristic.SecuritySystemCurrentState.AWAY_ARM);
+      }.bind(this)
+    );
 
-        this.setupListeners();
-        this.accessory.updateReachability(true);
-    }
-
-    setupListeners() {
+    this.device.on(
+      Arlo.DISARMED,
+      function () {
         this.accessory
+          .getService(Service.SecuritySystem)
+          .getCharacteristic(Characteristic.SecuritySystemTargetState)
+          .updateValue(Characteristic.SecuritySystemTargetState.DISARM);
+
+        this.accessory
+          .getService(Service.SecuritySystem)
+          .getCharacteristic(Characteristic.SecuritySystemCurrentState)
+          .updateValue(Characteristic.SecuritySystemCurrentState.DISARMED);
+      }.bind(this)
+    );
+
+    if (this.STAY_ARM !== Arlo.ARMED) {
+      this.device.on(
+        this.STAY_ARM,
+        function () {
+          this.accessory
             .getService(Service.SecuritySystem)
             .getCharacteristic(Characteristic.SecuritySystemTargetState)
-            .on('set', this.setTargetState.bind(this));
-    
-        this.device.on(Arlo.ARMED, function() {
-            this.accessory
-                .getService(Service.SecuritySystem)
-                .getCharacteristic(Characteristic.SecuritySystemTargetState)
-                .updateValue(Characteristic.SecuritySystemTargetState.AWAY_ARM);
-    
-            this.accessory
-                .getService(Service.SecuritySystem)
-                .getCharacteristic(Characteristic.SecuritySystemCurrentState)
-                .updateValue(Characteristic.SecuritySystemCurrentState.AWAY_ARM);
-        }.bind(this));
-        
-        this.device.on(Arlo.DISARMED, function() {
-            this.accessory
-                .getService(Service.SecuritySystem)
-                .getCharacteristic(Characteristic.SecuritySystemTargetState)
-                .updateValue(Characteristic.SecuritySystemTargetState.DISARM);
-    
-            this.accessory
-                .getService(Service.SecuritySystem)
-                .getCharacteristic(Characteristic.SecuritySystemCurrentState)
-                .updateValue(Characteristic.SecuritySystemCurrentState.DISARMED);
-        }.bind(this));
+            .updateValue(Characteristic.SecuritySystemTargetState.STAY_ARM);
 
-        if (this.STAY_ARM !== Arlo.ARMED) {
-            this.device.on(this.STAY_ARM, function() {
-                this.accessory
-                    .getService(Service.SecuritySystem)
-                    .getCharacteristic(Characteristic.SecuritySystemTargetState)
-                    .updateValue(Characteristic.SecuritySystemTargetState.STAY_ARM);
-        
-                this.accessory
-                    .getService(Service.SecuritySystem)
-                    .getCharacteristic(Characteristic.SecuritySystemCurrentState)
-                    .updateValue(Characteristic.SecuritySystemCurrentState.STAY_ARM);
-            }.bind(this));
-        }
+          this.accessory
+            .getService(Service.SecuritySystem)
+            .getCharacteristic(Characteristic.SecuritySystemCurrentState)
+            .updateValue(Characteristic.SecuritySystemCurrentState.STAY_ARM);
+        }.bind(this)
+      );
+    }
 
-        if (this.NIGHT_ARM !== Arlo.ARMED) {
-            this.device.on(this.NIGHT_ARM, function() {
-                this.accessory
-                    .getService(Service.SecuritySystem)
-                    .getCharacteristic(Characteristic.SecuritySystemTargetState)
-                    .updateValue(Characteristic.SecuritySystemTargetState.NIGHT_ARM);
-        
-                this.accessory
-                    .getService(Service.SecuritySystem)
-                    .getCharacteristic(Characteristic.SecuritySystemCurrentState)
-                    .updateValue(Characteristic.SecuritySystemCurrentState.NIGHT_ARM);
-            }.bind(this));
-        }
-        
-        setInterval(
-            function(){
-                this.device.subscribe();
-            }.bind(this),
-            (this.interval)
+    if (this.NIGHT_ARM !== Arlo.ARMED) {
+      this.device.on(
+        this.NIGHT_ARM,
+        function () {
+          this.accessory
+            .getService(Service.SecuritySystem)
+            .getCharacteristic(Characteristic.SecuritySystemTargetState)
+            .updateValue(Characteristic.SecuritySystemTargetState.NIGHT_ARM);
+
+          this.accessory
+            .getService(Service.SecuritySystem)
+            .getCharacteristic(Characteristic.SecuritySystemCurrentState)
+            .updateValue(Characteristic.SecuritySystemCurrentState.NIGHT_ARM);
+        }.bind(this)
+      );
+    }
+
+    setInterval(
+      function () {
+        this.device.subscribe();
+      }.bind(this),
+      this.interval
+    );
+  }
+
+  setTargetState(state, callback) {
+    switch (state) {
+      case Characteristic.SecuritySystemTargetState.AWAY_ARM:
+        this.device.arm(
+          function () {
+            callback(null);
+            this.device.emit(Arlo.ARMED);
+          }.bind(this)
         );
+        break;
+      case Characteristic.SecuritySystemTargetState.DISARM:
+        this.device.disarm(
+          function () {
+            callback(null);
+            this.device.emit(Arlo.DISARMED);
+          }.bind(this)
+        );
+        break;
+      case Characteristic.SecuritySystemTargetState.STAY_ARM:
+        this.device.setMode(
+          this.STAY_ARM,
+          function () {
+            callback(null);
+            this.device.emit(this.STAY_ARM);
+          }.bind(this)
+        );
+        break;
+      case Characteristic.SecuritySystemTargetState.NIGHT_ARM:
+        this.device.setMode(
+          this.NIGHT_ARM,
+          function () {
+            callback(null);
+            this.device.emit(this.NIGHT_ARM);
+          }.bind(this)
+        );
+        break;
     }
-
-    setTargetState(state, callback) {
-        switch(state) {
-            case Characteristic.SecuritySystemTargetState.AWAY_ARM:
-                this.device.arm(function() {
-                    callback(null);
-                    this.device.emit(Arlo.ARMED);
-                }.bind(this));
-                break;
-            case Characteristic.SecuritySystemTargetState.DISARM:
-                this.device.disarm(function() {
-                    callback(null);
-                    this.device.emit(Arlo.DISARMED);
-                }.bind(this));
-                break;
-            case Characteristic.SecuritySystemTargetState.STAY_ARM:
-                this.device.setMode(this.STAY_ARM, function() {
-                    callback(null);
-                    this.device.emit(this.STAY_ARM);
-                }.bind(this));
-                break;
-            case Characteristic.SecuritySystemTargetState.NIGHT_ARM:
-                this.device.setMode(this.NIGHT_ARM, function() {
-                    callback(null);
-                    this.device.emit(this.NIGHT_ARM);
-                }.bind(this));
-                break;
-        }
-    }
+  }
 }
 
 class ArloCameraAccessory {
-    constructor(log, accessory, device) {
-        this.accessory = accessory;
-        this.device = device;
-        this.log = log;
+  constructor(log, accessory, device) {
+    this.accessory = accessory;
+    this.device = device;
+    this.log = log;
 
-        this.accessory
-            .getService(Service.AccessoryInformation)
-            .setCharacteristic(Characteristic.Model, device.getModel())
-            .setCharacteristic(Characteristic.SerialNumber, device.getSerialNumber());
+    this.accessory
+      .getService(Service.AccessoryInformation)
+      .setCharacteristic(Characteristic.Model, device.getModel())
+      .setCharacteristic(Characteristic.SerialNumber, device.getSerialNumber());
 
-        this.setupListeners();
+    this.setupListeners();
+    this.device.get();
+  }
+
+  setupListeners() {
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.On)
+      .on("set", this.setPrivacyActive.bind(this));
+
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.ImageMirroring)
+      .on("set", this.setImageMirroring.bind(this));
+
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.ImageRotation)
+      .on("set", this.setImageRotation.bind(this));
+
+    setTimeout(
+      function () {
         this.device.get();
+      }.bind(this)
+    );
+
+    this.device.on(Arlo.BATTERY, this.updateBatteryLevel.bind(this));
+    this.device.on(Arlo.CHARGING, this.updateChargingState.bind(this));
+    this.device.on(Arlo.MOTION, this.updateMotionDetected.bind(this));
+
+    this.device.on(
+      Arlo.UPDATE,
+      function (info) {
+        this.updateInfo(info);
+        this.updateConnectionState(info.connectionState);
+        this.updateImageMirroring(info.mirror);
+        this.updateImageRotation(info.flip);
+        this.updateNightVision(info.nightVisionMode);
+        this.updatePrivacyActive(info.privacyActive);
+      }.bind(this)
+    );
+  }
+
+  setImageMirroring(value, callback) {
+    this.device.set({ mirror: value }, function () {
+      callback(null);
+    });
+  }
+
+  setImageRotation(value, callback) {
+    this.device.set({ flip: value > 0 ? true : false }, function () {
+      callback(null);
+    });
+  }
+
+  setPrivacyActive(value, callback) {
+    this.device.set({ privacyActive: value == false }, function () {
+      callback(null);
+    });
+  }
+
+  updateInfo(info) {
+    if (info === undefined) {
+      return;
     }
 
-    setupListeners() {
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.On)
-            .on('set', this.setPrivacyActive.bind(this));
+    let service = this.accessory.getService(Service.AccessoryInformation);
 
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.ImageMirroring)
-            .on('set', this.setImageMirroring.bind(this));
-
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.ImageRotation)
-            .on('set', this.setImageRotation.bind(this));
-
-        setTimeout(function(){
-            this.device.get();
-        }.bind(this));
-
-        this.device.on(Arlo.BATTERY, this.updateBatteryLevel.bind(this));
-        this.device.on(Arlo.CHARGING, this.updateChargingState.bind(this));
-        this.device.on(Arlo.MOTION, this.updateMotionDetected.bind(this));
-
-        this.device.on(Arlo.UPDATE, function(info) {
-            this.updateInfo(info);
-            this.updateConnectionState(info.connectionState);
-            this.updateImageMirroring(info.mirror);
-            this.updateImageRotation(info.flip);
-            this.updateNightVision(info.nightVisionMode);
-            this.updatePrivacyActive(info.privacyActive);
-        }.bind(this));
+    if (info.modelId) {
+      service.getCharacteristic(Characteristic.Model).updateValue(info.modelId);
     }
 
-    setImageMirroring(value, callback) {
-        this.device.set({mirror: value}, function() {
-            callback(null);
-        })
+    if (info.serialNumber) {
+      service
+        .getCharacteristic(Characteristic.SerialNumber)
+        .updateValue(info.serialNumber);
     }
 
-    setImageRotation(value, callback) {
-        this.device.set({flip: (value > 0 ? true : false)}, function() {
-            callback(null);
-        })
+    if (info.swVersion) {
+      service
+        .getCharacteristic(Characteristic.FirmwareRevision)
+        .updateValue(info.swVersion);
     }
 
-    setPrivacyActive(value, callback) {
-        this.device.set({privacyActive: value == false}, function() {
-            callback(null);
-        })
+    if (info.hwVersion) {
+      service
+        .getCharacteristic(Characteristic.HardwareRevision)
+        .updateValue(info.hwVersion);
+    }
+  }
+
+  updateBatteryLevel(batteryLevel) {
+    if (batteryLevel === undefined) {
+      return;
     }
 
-    updateInfo(info) {
-        if (info === undefined) {
-            return;
-        }
+    this.accessory
+      .getService(Service.BatteryService)
+      .getCharacteristic(Characteristic.BatteryLevel)
+      .updateValue(batteryLevel);
+  }
 
-        let service = this.accessory.getService(Service.AccessoryInformation);
+  updateChargingState(value) {
+    let state = Characteristic.ChargingState.NOT_CHARGEABLE;
 
-        if (info.modelId) {
-            service.getCharacteristic(Characteristic.Model).updateValue(info.modelId);
-        }
-
-        if (info.serialNumber) {
-            service.getCharacteristic(Characteristic.SerialNumber).updateValue(info.serialNumber);
-        }
-
-        if (info.swVersion) {
-            service.getCharacteristic(Characteristic.FirmwareRevision).updateValue(info.swVersion);
-        }
-
-        if (info.hwVersion) {
-            service.getCharacteristic(Characteristic.HardwareRevision).updateValue(info.hwVersion);
-        }
+    if (value !== undefined) {
+      state =
+        value != "Off"
+          ? Characteristic.ChargingState.CHARGING
+          : Characteristic.ChargingState.NOT_CHARGING;
     }
 
-    updateBatteryLevel(batteryLevel) {
-        if (batteryLevel === undefined) {
-            return;
-        }
+    this.accessory
+      .getService(Service.BatteryService)
+      .getCharacteristic(Characteristic.ChargingState)
+      .updateValue(state);
+  }
 
-        this.accessory
-            .getService(Service.BatteryService)
-            .getCharacteristic(Characteristic.BatteryLevel)
-            .updateValue(batteryLevel);
+  updateConnectionState(connectionState) {
+    if (connectionState === undefined) {
+      return;
     }
 
-    updateChargingState(value) {
-        let state = Characteristic.ChargingState.NOT_CHARGEABLE;
+    let online = connectionState === "available";
+    this.log(
+      "%s: Camera %s [%s]",
+      online ? "Online" : "Offline",
+      this.accessory.displayName,
+      this.device.id
+    );
+  }
 
-        if (value !== undefined) {
-            state = value != 'Off' ? Characteristic.ChargingState.CHARGING : Characteristic.ChargingState.NOT_CHARGING;
-        }
-
-        this.accessory
-            .getService(Service.BatteryService)
-            .getCharacteristic(Characteristic.ChargingState)
-            .updateValue(state);
+  updateMotionDetected(motionDetected) {
+    if (motionDetected === undefined) {
+      return;
     }
 
-    updateConnectionState(connectionState) {
-        if (connectionState === undefined) {
-            return;
-        }
+    this.accessory
+      .getService(Service.MotionSensor)
+      .getCharacteristic(Characteristic.MotionDetected)
+      .updateValue(motionDetected);
+  }
 
-        let online = connectionState === 'available';
-        this.log("%s: Camera %s [%s]", (online ? 'Online' : 'Offline'), this.accessory.displayName, this.device.id);
+  updateImageMirroring(mirror) {
+    if (mirror === undefined) {
+      return;
     }
 
-    updateMotionDetected(motionDetected) {
-        if (motionDetected === undefined) {
-            return;
-        }
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.ImageMirroring)
+      .updateValue(mirror);
+  }
 
-        this.accessory
-            .getService(Service.MotionSensor)
-            .getCharacteristic(Characteristic.MotionDetected)
-            .updateValue(motionDetected);
+  updateImageRotation(flip) {
+    if (flip === undefined) {
+      return;
     }
 
-    updateImageMirroring(mirror) {
-        if (mirror === undefined) {
-            return;
-        }
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.ImageRotation)
+      .updateValue(flip === true ? 180 : 0);
+  }
 
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.ImageMirroring)
-            .updateValue(mirror);
+  updateNightVision(nightVisionMode) {
+    if (nightVisionMode === undefined) {
+      return;
     }
 
-    updateImageRotation(flip) {
-        if (flip === undefined) {
-            return;
-        }
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.NightVision)
+      .updateValue(nightVisionMode === 1);
+  }
 
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.ImageRotation)
-            .updateValue(flip === true ? 180 : 0);
+  updatePrivacyActive(privacyActive) {
+    if (privacyActive === undefined) {
+      return;
     }
 
-    updateNightVision(nightVisionMode) {
-        if (nightVisionMode === undefined) {
-            return;
-        }
-
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.NightVision)
-            .updateValue(nightVisionMode === 1);
-    }
-
-    updatePrivacyActive(privacyActive) {
-        if (privacyActive === undefined) {
-            return;
-        }
-
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.On)
-            .updateValue(privacyActive == false);
-    }
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.On)
+      .updateValue(privacyActive == false);
+  }
 }
 
 class ArloQAccessory {
-    constructor(log, config, accessory, device) {
-        this.accessory = accessory;
-        this.device = device;
-        this.log = log;
+  constructor(log, config, accessory, device) {
+    this.accessory = accessory;
+    this.device = device;
+    this.log = log;
 
-        config = config || {};
+    config = config || {};
 
-        this.STAY_ARM = config.stay_arm || Arlo.ARMED;
-        this.NIGHT_ARM = config.night_arm || Arlo.ARMED;
-        this.interval = config.interval || DEFAULT_SUBSCRIBE_TIME;
+    this.STAY_ARM = config.stay_arm || Arlo.ARMED;
+    this.NIGHT_ARM = config.night_arm || Arlo.ARMED;
+    this.interval = config.interval || DEFAULT_SUBSCRIBE_TIME;
+
+    this.accessory
+      .getService(Service.AccessoryInformation)
+      .setCharacteristic(Characteristic.Model, device.getModel())
+      .setCharacteristic(Characteristic.SerialNumber, device.getSerialNumber());
+
+    this.setupListeners();
+  }
+
+  setupListeners() {
+    this.accessory
+      .getService(Service.SecuritySystem)
+      .getCharacteristic(Characteristic.SecuritySystemTargetState)
+      .on("set", this.setTargetState.bind(this));
+
+    this.device.on(
+      Arlo.ARMED,
+      function () {
+        this.accessory
+          .getService(Service.SecuritySystem)
+          .getCharacteristic(Characteristic.SecuritySystemTargetState)
+          .updateValue(Characteristic.SecuritySystemTargetState.AWAY_ARM);
 
         this.accessory
-            .getService(Service.AccessoryInformation)
-            .setCharacteristic(Characteristic.Model, device.getModel())
-            .setCharacteristic(Characteristic.SerialNumber, device.getSerialNumber());
+          .getService(Service.SecuritySystem)
+          .getCharacteristic(Characteristic.SecuritySystemCurrentState)
+          .updateValue(Characteristic.SecuritySystemCurrentState.AWAY_ARM);
+      }.bind(this)
+    );
 
-        this.setupListeners();
-    }
-
-    setupListeners() {
+    this.device.on(
+      Arlo.DISARMED,
+      function () {
         this.accessory
+          .getService(Service.SecuritySystem)
+          .getCharacteristic(Characteristic.SecuritySystemTargetState)
+          .updateValue(Characteristic.SecuritySystemTargetState.DISARM);
+
+        this.accessory
+          .getService(Service.SecuritySystem)
+          .getCharacteristic(Characteristic.SecuritySystemCurrentState)
+          .updateValue(Characteristic.SecuritySystemCurrentState.DISARMED);
+      }.bind(this)
+    );
+
+    if (this.STAY_ARM !== Arlo.ARMED) {
+      this.device.on(
+        this.STAY_ARM,
+        function () {
+          this.accessory
             .getService(Service.SecuritySystem)
             .getCharacteristic(Characteristic.SecuritySystemTargetState)
-            .on('set', this.setTargetState.bind(this));
+            .updateValue(Characteristic.SecuritySystemTargetState.STAY_ARM);
 
-        this.device.on(Arlo.ARMED, function() {
-            this.accessory
-                .getService(Service.SecuritySystem)
-                .getCharacteristic(Characteristic.SecuritySystemTargetState)
-                .updateValue(Characteristic.SecuritySystemTargetState.AWAY_ARM);
+          this.accessory
+            .getService(Service.SecuritySystem)
+            .getCharacteristic(Characteristic.SecuritySystemCurrentState)
+            .updateValue(Characteristic.SecuritySystemCurrentState.STAY_ARM);
+        }.bind(this)
+      );
+    }
 
-            this.accessory
-                .getService(Service.SecuritySystem)
-                .getCharacteristic(Characteristic.SecuritySystemCurrentState)
-                .updateValue(Characteristic.SecuritySystemCurrentState.AWAY_ARM);
-        }.bind(this));
+    if (this.NIGHT_ARM !== Arlo.ARMED) {
+      this.device.on(
+        this.NIGHT_ARM,
+        function () {
+          this.accessory
+            .getService(Service.SecuritySystem)
+            .getCharacteristic(Characteristic.SecuritySystemTargetState)
+            .updateValue(Characteristic.SecuritySystemTargetState.NIGHT_ARM);
 
-        this.device.on(Arlo.DISARMED, function() {
-            this.accessory
-                .getService(Service.SecuritySystem)
-                .getCharacteristic(Characteristic.SecuritySystemTargetState)
-                .updateValue(Characteristic.SecuritySystemTargetState.DISARM);
+          this.accessory
+            .getService(Service.SecuritySystem)
+            .getCharacteristic(Characteristic.SecuritySystemCurrentState)
+            .updateValue(Characteristic.SecuritySystemCurrentState.NIGHT_ARM);
+        }.bind(this)
+      );
+    }
 
-            this.accessory
-                .getService(Service.SecuritySystem)
-                .getCharacteristic(Characteristic.SecuritySystemCurrentState)
-                .updateValue(Characteristic.SecuritySystemCurrentState.DISARMED);
-        }.bind(this));
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.On)
+      .on("set", this.setPrivacyActive.bind(this));
 
-        if (this.STAY_ARM !== Arlo.ARMED) {
-            this.device.on(this.STAY_ARM, function() {
-                this.accessory
-                    .getService(Service.SecuritySystem)
-                    .getCharacteristic(Characteristic.SecuritySystemTargetState)
-                    .updateValue(Characteristic.SecuritySystemTargetState.STAY_ARM);
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.ImageMirroring)
+      .on("set", this.setImageMirroring.bind(this));
 
-                this.accessory
-                    .getService(Service.SecuritySystem)
-                    .getCharacteristic(Characteristic.SecuritySystemCurrentState)
-                    .updateValue(Characteristic.SecuritySystemCurrentState.STAY_ARM);
-            }.bind(this));
-        }
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.ImageRotation)
+      .on("set", this.setImageRotation.bind(this));
 
-        if (this.NIGHT_ARM !== Arlo.ARMED) {
-            this.device.on(this.NIGHT_ARM, function() {
-                this.accessory
-                    .getService(Service.SecuritySystem)
-                    .getCharacteristic(Characteristic.SecuritySystemTargetState)
-                    .updateValue(Characteristic.SecuritySystemTargetState.NIGHT_ARM);
+    this.accessory
+      .getService(Service.MotionSensor)
+      .getCharacteristic(Characteristic.MotionDetected)
+      .on("get", this.get.bind(this));
 
-                this.accessory
-                    .getService(Service.SecuritySystem)
-                    .getCharacteristic(Characteristic.SecuritySystemCurrentState)
-                    .updateValue(Characteristic.SecuritySystemCurrentState.NIGHT_ARM);
-            }.bind(this));
-        }
+    this.device.on(Arlo.MOTION, this.updateMotionDetected.bind(this));
 
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.On)
-            .on('set', this.setPrivacyActive.bind(this));
+    this.device.on(
+      Arlo.UPDATE,
+      function (info) {
+        this.updateInfo(info);
+        this.updateConnectionState(info.connectionState);
+        this.updateImageMirroring(info.mirror);
+        this.updateImageRotation(info.flip);
+        this.updateNightVision(info.nightVisionMode);
+        this.updatePrivacyActive(info.privacyActive);
+      }.bind(this)
+    );
 
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.ImageMirroring)
-            .on('set', this.setImageMirroring.bind(this));
+    setInterval(
+      function () {
+        this.device.subscribe();
+      }.bind(this),
+      this.interval
+    );
+  }
 
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.ImageRotation)
-            .on('set', this.setImageRotation.bind(this));
+  get(callback) {
+    if (this.device) {
+      this.device.get();
+    }
 
-        this.accessory
-            .getService(Service.MotionSensor)
-            .getCharacteristic(Characteristic.MotionDetected)
-            .on('get', this.get.bind(this));
+    callback(null, null);
+  }
 
-        this.device.on(Arlo.MOTION, this.updateMotionDetected.bind(this));
+  setImageMirroring(value, callback) {
+    this.device.set({ mirror: value }, function () {
+      callback(null);
+    });
+  }
 
-        this.device.on(Arlo.UPDATE, function(info) {
-            this.updateInfo(info);
-            this.updateConnectionState(info.connectionState);
-            this.updateImageMirroring(info.mirror);
-            this.updateImageRotation(info.flip);
-            this.updateNightVision(info.nightVisionMode);
-            this.updatePrivacyActive(info.privacyActive);
-        }.bind(this));
+  setImageRotation(value, callback) {
+    this.device.set({ flip: value > 0 ? true : false }, function () {
+      callback(null);
+    });
+  }
 
-        setInterval(
-            function() {
-                this.device.subscribe();
-            }.bind(this),
-            (this.interval)
+  setPrivacyActive(value, callback) {
+    this.device.set({ privacyActive: value == false }, function () {
+      callback(null);
+    });
+  }
+
+  setTargetState(state, callback) {
+    switch (state) {
+      case Characteristic.SecuritySystemTargetState.AWAY_ARM:
+        this.device.arm(
+          function () {
+            callback(null);
+            this.device.emit(Arlo.ARMED);
+          }.bind(this)
         );
-    }
-
-    get(callback) {
-        if (this.device) {
-            this.device.get();
-        }
-
-        callback(null, null)
-    }
-
-    setImageMirroring(value, callback) {
-        this.device.set({mirror: value}, function() {
+        break;
+      case Characteristic.SecuritySystemTargetState.DISARM:
+        this.device.disarm(
+          function () {
             callback(null);
-        })
-    }
-
-    setImageRotation(value, callback) {
-        this.device.set({flip: (value > 0 ? true : false)}, function() {
+            this.device.emit(Arlo.DISARMED);
+          }.bind(this)
+        );
+        break;
+      case Characteristic.SecuritySystemTargetState.STAY_ARM:
+        this.device.setMode(
+          this.STAY_ARM,
+          function () {
             callback(null);
-        })
-    }
-
-    setPrivacyActive(value, callback) {
-        this.device.set({privacyActive: value == false}, function() {
+            this.device.emit(this.STAY_ARM);
+          }.bind(this)
+        );
+        break;
+      case Characteristic.SecuritySystemTargetState.NIGHT_ARM:
+        this.device.setMode(
+          this.NIGHT_ARM,
+          function () {
             callback(null);
-        })
+            this.device.emit(this.NIGHT_ARM);
+          }.bind(this)
+        );
+        break;
+    }
+  }
+
+  updateInfo(info) {
+    if (info === undefined) {
+      return;
     }
 
-    setTargetState(state, callback) {
-        switch(state) {
-            case Characteristic.SecuritySystemTargetState.AWAY_ARM:
-                this.device.arm(function() {
-                    callback(null);
-                    this.device.emit(Arlo.ARMED);
-                }.bind(this));
-                break;
-            case Characteristic.SecuritySystemTargetState.DISARM:
-                this.device.disarm(function() {
-                    callback(null);
-                    this.device.emit(Arlo.DISARMED);
-                }.bind(this));
-                break;
-            case Characteristic.SecuritySystemTargetState.STAY_ARM:
-                this.device.setMode(this.STAY_ARM, function() {
-                    callback(null);
-                    this.device.emit(this.STAY_ARM);
-                }.bind(this));
-                break;
-            case Characteristic.SecuritySystemTargetState.NIGHT_ARM:
-                this.device.setMode(this.NIGHT_ARM, function() {
-                    callback(null);
-                    this.device.emit(this.NIGHT_ARM);
-                }.bind(this));
-                break;
-        }
+    let service = this.accessory.getService(Service.AccessoryInformation);
+
+    if (info.modelId) {
+      service.getCharacteristic(Characteristic.Model).updateValue(info.modelId);
     }
 
-    updateInfo(info) {
-        if (info === undefined) {
-            return;
-        }
-
-        let service = this.accessory.getService(Service.AccessoryInformation);
-
-        if (info.modelId) {
-            service.getCharacteristic(Characteristic.Model).updateValue(info.modelId);
-        }
-
-        if (info.serialNumber) {
-            service.getCharacteristic(Characteristic.SerialNumber).updateValue(info.serialNumber);
-        }
-
-        if (info.swVersion) {
-            service.getCharacteristic(Characteristic.FirmwareRevision).updateValue(info.swVersion);
-        }
-
-        if (info.hwVersion) {
-            service.getCharacteristic(Characteristic.HardwareRevision).updateValue(info.hwVersion);
-        }
+    if (info.serialNumber) {
+      service
+        .getCharacteristic(Characteristic.SerialNumber)
+        .updateValue(info.serialNumber);
     }
 
-    updateConnectionState(connectionState) {
-        if (connectionState === undefined) {
-            return;
-        }
-
-        let online = connectionState === 'available';
-        this.log("%s: Camera %s [%s]", (online ? 'Online' : 'Offline'), this.accessory.displayName, this.device.id);
+    if (info.swVersion) {
+      service
+        .getCharacteristic(Characteristic.FirmwareRevision)
+        .updateValue(info.swVersion);
     }
 
-    updateMotionDetected(motionDetected) {
-        if (motionDetected === undefined) {
-            return;
-        }
+    if (info.hwVersion) {
+      service
+        .getCharacteristic(Characteristic.HardwareRevision)
+        .updateValue(info.hwVersion);
+    }
+  }
 
-        this.accessory
-            .getService(Service.MotionSensor)
-            .getCharacteristic(Characteristic.MotionDetected)
-            .updateValue(motionDetected);
+  updateConnectionState(connectionState) {
+    if (connectionState === undefined) {
+      return;
     }
 
-    updateImageMirroring(mirror) {
-        if (mirror === undefined) {
-            return;
-        }
+    let online = connectionState === "available";
+    this.log(
+      "%s: Camera %s [%s]",
+      online ? "Online" : "Offline",
+      this.accessory.displayName,
+      this.device.id
+    );
+  }
 
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.ImageMirroring)
-            .updateValue(mirror);
+  updateMotionDetected(motionDetected) {
+    if (motionDetected === undefined) {
+      return;
     }
 
-    updateImageRotation(flip) {
-        if (flip === undefined) {
-            return;
-        }
+    this.accessory
+      .getService(Service.MotionSensor)
+      .getCharacteristic(Characteristic.MotionDetected)
+      .updateValue(motionDetected);
+  }
 
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.ImageRotation)
-            .updateValue(flip === true ? 180 : 0);
+  updateImageMirroring(mirror) {
+    if (mirror === undefined) {
+      return;
     }
 
-    updateNightVision(nightVisionMode) {
-        if (nightVisionMode === undefined) {
-            return;
-        }
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.ImageMirroring)
+      .updateValue(mirror);
+  }
 
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.NightVision)
-            .updateValue(nightVisionMode === 1);
+  updateImageRotation(flip) {
+    if (flip === undefined) {
+      return;
     }
 
-    updatePrivacyActive(privacyActive) {
-        if (privacyActive === undefined) {
-            return;
-        }
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.ImageRotation)
+      .updateValue(flip === true ? 180 : 0);
+  }
 
-        this.accessory
-            .getService(Service.CameraControl)
-            .getCharacteristic(Characteristic.On)
-            .updateValue(privacyActive == false);
+  updateNightVision(nightVisionMode) {
+    if (nightVisionMode === undefined) {
+      return;
     }
+
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.NightVision)
+      .updateValue(nightVisionMode === 1);
+  }
+
+  updatePrivacyActive(privacyActive) {
+    if (privacyActive === undefined) {
+      return;
+    }
+
+    this.accessory
+      .getService(Service.CameraControl)
+      .getCharacteristic(Characteristic.On)
+      .updateValue(privacyActive == false);
+  }
 }

@@ -32,7 +32,7 @@
   },
   "dependencies": {
     "debug": "^4.1.1",
-    "ffmpeg-for-homebridge": "^0.0.8",
+    "ffmpeg-for-homebridge": "^0.0.9",
     "node-arlo": "^1.3.2",
     "ip": "^1.1.5"
   }

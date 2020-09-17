@@ -1,6 +1,19 @@
-import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, PlatformConfig, Service, Characteristic } from 'homebridge';
+import {
+  API,
+  DynamicPlatformPlugin,
+  Logger,
+  PlatformAccessory,
+  PlatformConfig,
+  Service,
+  Characteristic,
+} from 'homebridge';
 
-import { PLATFORM_NAME, PLUGIN_NAME, DEFAULT_PACKET_SIZE, DEFAULT_SUBSCRIBE_TIME } from './settings';
+import {
+  PLATFORM_NAME,
+  PLUGIN_NAME,
+  DEFAULT_PACKET_SIZE,
+  DEFAULT_SUBSCRIBE_TIME,
+} from './settings';
 import * as PlatformAccessories from './accessories';
 
 import { default as Arlo } from 'node-arlo';
@@ -12,7 +25,8 @@ import { default as Arlo } from 'node-arlo';
  */
 export class ArloPlatform implements DynamicPlatformPlugin {
   public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
+  public readonly Characteristic: typeof Characteristic = this.api.hap
+    .Characteristic;
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
@@ -29,7 +43,9 @@ export class ArloPlatform implements DynamicPlatformPlugin {
     this.log.debug('Finished initializing platform:', this.config.name);
 
     if (!config) {
-      this.log.warn(`Ignoring ${PLATFORM_NAME} Platform setup because it is not configured.`);
+      this.log.warn(
+        `Ignoring ${PLATFORM_NAME} Platform setup because it is not configured.`,
+      );
       this.disabled = true;
       return;
     }
@@ -94,7 +110,6 @@ export class ArloPlatform implements DynamicPlatformPlugin {
    * must not be registered again to prevent "duplicate UUID" errors.
    */
   discoverDevices() {
-
     this.arlo.on(Arlo.FOUND, (device) => {
       // generate a unique id for the accessory this should be generated from
       // something globally unique, but constant, for example, the device serial
@@ -103,11 +118,16 @@ export class ArloPlatform implements DynamicPlatformPlugin {
 
       // see if an accessory with the same uuid has already been registered and restored from
       // the cached devices we stored in the `configureAccessory` method above
-      const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
+      const existingAccessory = this.accessories.find(
+        (accessory) => accessory.UUID === uuid,
+      );
 
       if (existingAccessory) {
         // the accessory already exists
-        this.log.info('Restoring existing accessory from cache:', existingAccessory.displayName);
+        this.log.info(
+          'Restoring existing accessory from cache:',
+          existingAccessory.displayName,
+        );
 
         // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
         existingAccessory.context.device = device;
@@ -117,29 +137,37 @@ export class ArloPlatform implements DynamicPlatformPlugin {
         // this is imported from `accessories`
         switch (device.getType()) {
           case Arlo.BASESTATION:
-            this.log.info(`Online: Base Station ${existingAccessory.displayName} [${device.id}]`);
+            this.log.info(
+              `Online: Base Station ${existingAccessory.displayName} [${device.id}]`,
+            );
             new PlatformAccessories.BaseStation(this, existingAccessory);
             break;
           case Arlo.CAMERA:
             if (this.config.include_cameras) {
-              this.log.info(`Online: Camera ${existingAccessory.displayName} [${device.id}]`);
+              this.log.info(
+                `Online: Camera ${existingAccessory.displayName} [${device.id}]`,
+              );
               new PlatformAccessories.Camera(this, existingAccessory);
             }
             break;
           case Arlo.Q:
             if (this.config.include_cameras) {
-              this.log.info(`Online: Camera ${existingAccessory.displayName} [${device.id}]`);
+              this.log.info(
+                `Online: Camera ${existingAccessory.displayName} [${device.id}]`,
+              );
               new PlatformAccessories.Q(this, existingAccessory);
             }
             break;
         }
-
       } else {
         // the accessory does not yet exist, so we need to create it
         this.log.info('Adding new accessory:', device.getName());
 
         // create a new accessory
-        const accessory = new this.api.platformAccessory(device.getName(), uuid);
+        const accessory = new this.api.platformAccessory(
+          device.getName(),
+          uuid,
+        );
 
         // store a copy of the device object in the `accessory.context`
         // the `context` property can be used to store any data about the accessory you may need
@@ -149,7 +177,9 @@ export class ArloPlatform implements DynamicPlatformPlugin {
         // this is imported from `accessories`
         switch (device.getType()) {
           case Arlo.BASESTATION:
-            this.log.info(`Found: Base Station ${device.getName()} [${device.id}]`);
+            this.log.info(
+              `Found: Base Station ${device.getName()} [${device.id}]`,
+            );
             new PlatformAccessories.BaseStation(this, accessory);
             break;
           case Arlo.CAMERA:
@@ -167,7 +197,9 @@ export class ArloPlatform implements DynamicPlatformPlugin {
         }
 
         // link the accessory to your platform
-        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+        this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+          accessory,
+        ]);
       }
 
       // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
@@ -175,6 +207,5 @@ export class ArloPlatform implements DynamicPlatformPlugin {
     });
 
     this.arlo.login(this.config.email, this.config.password);
-
   }
 }

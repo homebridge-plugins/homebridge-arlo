@@ -123,11 +123,7 @@
       "title": "Optional Settings",
       "expandable": true,
       "expanded": false,
-      "items": [
-        "interval",
-        "stay_arm",
-        "night_arm"
-      ]
+      "items": ["interval", "stay_arm", "night_arm"]
     }
   ]
 }

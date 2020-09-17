@@ -22,7 +22,9 @@ import {
 import { FRAMES_PER_SECOND, DEFAULT_MAX_STREAMS } from '../settings';
 import { ArloPlatform } from '../platform';
 
-export class ArloCameraSource extends EventEmitter implements LegacyCameraSource {
+export class ArloCameraSource
+  extends EventEmitter
+  implements LegacyCameraSource {
   services: Service[] = [];
 
   streamControllers: StreamController[] = [];
@@ -40,7 +42,6 @@ export class ArloCameraSource extends EventEmitter implements LegacyCameraSource
     private readonly platform: ArloPlatform,
     private readonly accessory: PlatformAccessory,
   ) {
-
     super();
 
     this.device = this.accessory.context.device;
@@ -63,14 +64,20 @@ export class ArloCameraSource extends EventEmitter implements LegacyCameraSource
         ],
         codec: {
           profiles: [
-            this.platform.api.hap.StreamController.VideoCodecParamProfileIDTypes.BASELINE,
-            this.platform.api.hap.StreamController.VideoCodecParamProfileIDTypes.MAIN,
-            this.platform.api.hap.StreamController.VideoCodecParamProfileIDTypes.HIGH,
+            this.platform.api.hap.StreamController.VideoCodecParamProfileIDTypes
+              .BASELINE,
+            this.platform.api.hap.StreamController.VideoCodecParamProfileIDTypes
+              .MAIN,
+            this.platform.api.hap.StreamController.VideoCodecParamProfileIDTypes
+              .HIGH,
           ],
           levels: [
-            this.platform.api.hap.StreamController.VideoCodecParamLevelTypes.TYPE3_1,
-            this.platform.api.hap.StreamController.VideoCodecParamLevelTypes.TYPE3_2,
-            this.platform.api.hap.StreamController.VideoCodecParamLevelTypes.TYPE4_0,
+            this.platform.api.hap.StreamController.VideoCodecParamLevelTypes
+              .TYPE3_1,
+            this.platform.api.hap.StreamController.VideoCodecParamLevelTypes
+              .TYPE3_2,
+            this.platform.api.hap.StreamController.VideoCodecParamLevelTypes
+              .TYPE4_0,
           ],
         },
       },
@@ -85,24 +92,41 @@ export class ArloCameraSource extends EventEmitter implements LegacyCameraSource
     };
 
     for (let i = 0; i < this.maxStreams; i++) {
-      const streamController = new this.platform.api.hap.StreamController(i, options, this);
+      const streamController = new this.platform.api.hap.StreamController(
+        i,
+        options,
+        this,
+      );
 
       this.services.push(streamController.service);
-      this.streamControllers.push(streamController); 
+      this.streamControllers.push(streamController);
     }
   }
 
-  handleSnapshotRequest(request: SnapshotRequest, callback: NodeCallback<Buffer>) {
+  handleSnapshotRequest(
+    request: SnapshotRequest,
+    callback: NodeCallback<Buffer>,
+  ) {
     this.platform.log.debug('Snapshot requested');
-    this.platform.log.info(`Snapshot request: Camera ${this.accessory.displayName} [${this.device.id}]`);
+    this.platform.log.info(
+      `Snapshot request: Camera ${this.accessory.displayName} [${this.device.id}]`,
+    );
 
-    this.device.downloadSnapshot(this.device.device.presignedLastImageUrl, (data) => {
-      this.platform.log.info(`Snapshot downloaded: Camera ${this.accessory.displayName} [${this.device.id}]`);
-      callback(null, data);
-    });
+    this.device.downloadSnapshot(
+      this.device.device.presignedLastImageUrl,
+      (data) => {
+        this.platform.log.info(
+          `Snapshot downloaded: Camera ${this.accessory.displayName} [${this.device.id}]`,
+        );
+        callback(null, data);
+      },
+    );
   }
 
-  prepareStream(request: PrepareStreamRequest, callback: PreparedStreamRequestCallback) {
+  prepareStream(
+    request: PrepareStreamRequest,
+    callback: PreparedStreamRequestCallback,
+  ) {
     this.platform.log.debug('Prepare stream request');
 
     this.device.getStream((streamUrl) => {
@@ -152,7 +176,10 @@ export class ArloCameraSource extends EventEmitter implements LegacyCameraSource
         };
 
         session.videoPort = request.video.port;
-        session.videoSrtp = Buffer.concat([request.video.srtp_key, request.video.srtp_salt]);
+        session.videoSrtp = Buffer.concat([
+          request.video.srtp_key,
+          request.video.srtp_salt,
+        ]);
         session.videoSsrc = ssrc;
       }
 
@@ -170,7 +197,10 @@ export class ArloCameraSource extends EventEmitter implements LegacyCameraSource
         };
 
         session.audioPort = request.audio.port;
-        session.audioSrtp = Buffer.concat([request.audio.srtp_key, request.audio.srtp_salt]);
+        session.audioSrtp = Buffer.concat([
+          request.audio.srtp_key,
+          request.audio.srtp_salt,
+        ]);
         session.audioSsrc = ssrc;
       }
 
@@ -253,13 +283,19 @@ export class ArloCameraSource extends EventEmitter implements LegacyCameraSource
         '-f rtp',
         '-srtp_out_suite AES_CM_128_HMAC_SHA1_80',
         `-srtp_out_params ${session.videoSrtp.toString('base64')}`,
-        `srtp://${session.address}:${session.videoPort}`
-          + `?rtcpport=${session.videoPort}&localrtcpport=${session.videoPort}&pkt_size=${this.platform.config.packetSize}`,
+        `srtp://${session.address}:${session.videoPort}` +
+          `?rtcpport=${session.videoPort}&localrtcpport=${session.videoPort}&pkt_size=${this.platform.config.packetSize}`,
       ];
       const ffmpegCommand = ffmpegCommandParts.join(' ');
 
-      const ffmpeg = spawn(this.platform.config.videoProcessor, ffmpegCommand.split(' '), { env: process.env });
-      this.platform.log.debug(`Start streaming video with ${request.video?.width}x${request.video?.height}@${videoBitrate}kBit`);
+      const ffmpeg = spawn(
+        this.platform.config.videoProcessor,
+        ffmpegCommand.split(' '),
+        { env: process.env },
+      );
+      this.platform.log.debug(
+        `Start streaming video with ${request.video?.width}x${request.video?.height}@${videoBitrate}kBit`,
+      );
       this.platform.log.debug(`ffmpeg ${ffmpegCommand}`);
 
       // Always setup hook on stderr.

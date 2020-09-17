@@ -6,7 +6,6 @@
   "author": "homebridge-plugins",
   "main": "dist/index.js",
   "scripts": {
-    "developer": "DEBUG=arlo homebridge -D -U `pwd` -P `pwd`",
     "lint": "eslint src/**.ts",
     "watch": "npm run build && npm link && nodemon",
     "build": "rimraf ./dist && tsc",
@@ -20,14 +19,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/homebridge-plugins/homebridge-arlo.git"
+    "url": "git://github.com/EpicKris/homebridge-arlo.git"
   },
   "bugs": {
-    "url": "http://github.com/homebridge-plugins/homebridge-arlo/issues"
+    "url": "http://github.com/EpicKris/homebridge-arlo/issues"
   },
   "engines": {
-    "node": ">=8.15.1",
-    "homebridge": ">=1.0.0"
+    "node": ">=12.18.3",
+    "homebridge": ">=1.2.2"
   },
   "devDependencies": {
     "@types/ip": ">=1.1.0",

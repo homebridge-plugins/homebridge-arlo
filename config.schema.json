@@ -8,42 +8,42 @@
     "type": "object",
     "properties": {
       "name": {
-        "type": "string",
         "title": "Name",
-        "default": "Arlo",
-        "required": true
+        "type": "string",
+        "required": true,
+        "default": "Arlo"
       },
       "email": {
+        "title": "Email",
         "type": "string",
-        "title": "E-mail",
-        "placeholder": "email@arlo.com",
-        "required": true
+        "required": true,
+        "placeholder": "Arlo email…"
       },
       "password": {
-        "type": "string",
         "title": "Password",
-        "placeholder": "Your Arlo Password",
-        "required": true
+        "type": "string",
+        "required": true,
+        "placeholder": "Arlo password…"
+      },
+      "stayArm": {
+        "title": "Stay Arm",
+        "type": "string",
+        "required": false,
+        "placeholder": "mode#",
+        "description": "The mode# label for the custom mode created in Arlo for the stay state."
+      },
+      "nightArm": {
+        "title": "Night Arm",
+        "type": "string",
+        "required": false,
+        "placeholder": "mode#",
+        "description": "The mode# label for the custom mode created in Arlo for the night state."
       },
       "interval": {
         "type": "integer",
         "title": "Interval",
         "placeholder": "6000",
         "required": false
-      },
-      "stay_arm": {
-        "type": "string",
-        "title": "Stay Arm",
-        "placeholder": "modeX",
-        "required": false,
-        "description": "The modeX label for the custom mode created in Arlo for the home or stay state."
-      },
-      "night_arm": {
-        "type": "string",
-        "title": "Night Arm",
-        "placeholder": "modeX",
-        "required": false,
-        "description": "The modeX label for the custom mode created in Arlo for the night state."
       },
       "include_cameras": {
         "type": "boolean",

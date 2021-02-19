@@ -6,14 +6,10 @@
   "author": "homebridge-plugins",
   "main": "dist/index.js",
   "scripts": {
-    "developer": "DEBUG=arlo homebridge -D -U `pwd` -P `pwd`",
-    "lint": "eslint src/**/*.{js,ts,json}",
+    "lint": "eslint src/**.ts",
     "watch": "npm run build && npm link && nodemon",
-    "build": "npm run clean && tsc",
-    "test": "jest",
-    "clean": "rimraf ./dist",
-    "prepublishOnly": "npm run lint && npm run build",
-    "postpublish": "npm run clean"
+    "build": "rimraf ./dist && tsc",
+    "prepublishOnly": "npm run lint && npm run build"
   },
   "license": "ISC",
   "keywords": [
@@ -23,34 +19,31 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/homebridge-plugins/homebridge-arlo.git"
+    "url": "git://github.com/EpicKris/homebridge-arlo.git"
   },
   "bugs": {
-    "url": "http://github.com/homebridge-plugins/homebridge-arlo/issues"
+    "url": "http://github.com/EpicKris/homebridge-arlo/issues"
   },
   "engines": {
-    "node": ">=8.15.1",
-    "homebridge": ">=1.0.0"
+    "node": ">=12.18.3",
+    "homebridge": ">=1.2.2"
   },
   "devDependencies": {
     "@types/ip": ">=1.1.0",
-    "@types/jest": "^26.0.0",
-    "@types/node": "^14.0.14",
-    "@typescript-eslint/eslint-plugin": "^3.4.0",
-    "@typescript-eslint/parser": "^3.4.0",
-    "eslint": "^7.3.1",
-    "homebridge": "^1.1.1",
-    "jest": "^26.0.1",
+    "@types/node": "^14.10.3",
+    "@typescript-eslint/eslint-plugin": "^4.1.1",
+    "@typescript-eslint/parser": "^4.1.1",
+    "eslint": "^7.9.0",
+    "homebridge": "^1.2.2",
     "nodemon": "^2.0.4",
     "rimraf": "^3.0.2",
-    "ts-jest": "^26.1.0",
-    "ts-node": "^8.10.2",
-    "typescript": "^3.9.5"
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.2"
   },
   "dependencies": {
     "debug": "^4.1.1",
-    "ffmpeg-for-homebridge": ">=0.0.7",
-    "node-arlo": ">=1.3.1.beta0",
+    "ffmpeg-for-homebridge": "^0.0.9",
+    "node-arlo": "^1.3.3-beta.0",
     "ip": ">=1.1.5"
   }
 }

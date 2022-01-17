@@ -13,7 +13,7 @@
     "dist"
   ],
   "rules": {
-    "quotes": ["warn", "single"],
+    "quotes": ["warn", "double"],
     "indent": ["warn", 2, { "SwitchCase": 1 }],
     "linebreak-style": ["warn", "unix"],
     "semi": ["warn", "always"],

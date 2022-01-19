@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   API,
@@ -8,6 +9,7 @@ import {
   Service,
 } from "homebridge";
 import * as settings from "./settings";
+import { Arlo } from "@koush/arlo";
 
 /**
  * HomebridgePlatform
@@ -27,7 +29,7 @@ export class ArloPlatform implements DynamicPlatformPlugin {
     public readonly config: settings.SwitchBotPlatformConfig,
     public readonly api: API,
   ) {
-    this.debugLog("Finished initializing platform:", this.config.name);
+    this.debugLog(`Finished initializing platform: ${this.config.name}`);
     // only load if configured
     if (!this.config) {
       return;
@@ -80,18 +82,43 @@ export class ArloPlatform implements DynamicPlatformPlugin {
     this.config.logging = "debug";
   }
 
+  options() {
+    const arloUser = this.config.email;
+    const arloPassword = this.config.password;
+    const updatePropertiesEvery = this.config.refreshRate | 5;
+    const token = this.config.token;
+    const localAppID = "";
+    const mobilePayload = "";
+
+    const options = {
+      arloUser: arloUser,
+      arloPassword: arloPassword,
+      updatePropertiesEvery: updatePropertiesEvery,
+      token: token,
+      localAppID: localAppID,
+      mobilePayload: mobilePayload,
+    };
+    return options;
+  }
+
   /**
    * this method discovers devices
    */
   async discoverDevices() {
     try {
+      const options = this.options();
+      this.log.info(JSON.stringify(options));
+      const arlo = new Arlo(options);
+      const result = await arlo.login();
+      if (!result) {
+        throw new Error("arlo login failed");
+      }
+
       this.infoLog("Discover Devices");
     } catch (error) {
       this.errorLog(`Error ${error}`);
     }
   }
-
-  
 
   /**
    * If device level logging is turned on, log to log.warn

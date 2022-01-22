@@ -13,117 +13,81 @@
         "required": true,
         "default": "Arlo"
       },
-      "email": {
-        "title": "Email",
+      "arloUser": {
+        "title": "Arlo Username",
         "type": "string",
         "required": true,
-        "placeholder": "Arlo email…"
+        "placeholder": "email@email.com",
+        "x-schema-form": {
+          "type": "email"
+        }
       },
-      "password": {
+      "arloPassword": {
         "title": "Password",
         "type": "string",
         "required": true,
-        "placeholder": "Arlo password…"
+        "placeholder": "Arlo password…",
+        "x-schema-form": {
+          "type": "password"
+        }
       },
-      "stayArm": {
-        "title": "Stay Arm",
+      "mfa": {
+        "title": "Use MFA",
+        "type": "boolean",
+        "required": false,
+        "description": "."
+      },
+      "emailUser": {
+        "title": "Email User",
         "type": "string",
         "required": false,
         "placeholder": "mode#",
-        "description": "The mode# label for the custom mode created in Arlo for the stay state."
+        "description": ".",
+        "x-schema-form": {
+          "type": "email"
+        }
       },
-      "nightArm": {
-        "title": "Night Arm",
+      "emailPassword": {
+        "title": "Email Password",
+        "type": "string",
+        "required": false,
+        "placeholder": "mode#",
+        "description": ".",
+        "x-schema-form": {
+          "type": "password"
+        }
+      },
+      "emailServer": {
+        "title": "Email User",
         "type": "string",
         "required": false,
         "placeholder": "mode#",
         "description": "The mode# label for the custom mode created in Arlo for the night state."
       },
-      "interval": {
-        "type": "integer",
-        "title": "Interval",
-        "placeholder": "6000",
-        "required": false
+      "refreshRate": {
+        "title": "RefreshRate",
+        "type": "string",
+        "required": false,
+        "placeholder": "mode#",
+        "description": "The mode# label for the custom mode created in Arlo for the night state."
       },
-      "include_cameras": {
-        "type": "boolean",
-        "title": "Include Cameras",
-        "default": true,
-        "required": true,
-        "description": "If you would like to disable cameras, uncheck this."
-      },
-      "streaming": {
-        "type": "object",
-        "properties": {
-          "videoProcessor": {
-            "title": "Video Processor",
-            "type": "string",
-            "required": false,
-            "placeholder": "ffmpeg",
-            "description": "Default: ffmpeg, The video processor used to perform transcoding. An alternate executable maybe used, however it needs to conform to ffmpeg parameters."
-          },
-          "videoDecoder": {
-            "title": "Video Decoder",
-            "type": "string",
-            "required": false,
-            "placeholder": "libx264",
-            "description": "Default: libx264, The video codec used to decode the incoming h264 stream from the Arlo server."
-          },
-          "videoEncoder": {
-            "title": "Video Encoder",
-            "type": "string",
-            "required": false,
-            "placeholder": "libx264",
-            "description": "Default: libx264, The video codec used to encode the outgoing h264 stream to the iOS client device."
-          },
-          "audioEncoder": {
-            "title": "Audio Encoder",
-            "type": "string",
-            "required": false,
-            "placeholder": "libopus",
-            "description": "Default: libopus, The audio codec that will be used to decode/encode the audio stream. HomeKit requires either an Opus or AAC-ELD format audio stream."
-          },
-          "packetSize": {
-            "title": "Packet Size",
-            "type": "string",
-            "required": false,
-            "placeholder": "1316",
-            "description": " Default: 1316, The packet sized to be used. Use smaller multiples of 188 to possibly improve performance (376, 564, etc)."
-          },
-          "maxBitrate": {
-            "title": "Packet Size",
-            "type": "string",
-            "required": false,
-            "placeholder": "300",
-            "description": "Default: 300, The maximum bitrate of the encoded stream in kbit/s."
-          },
-          "additionalVideoCommands": {
-            "title": "Packet Size",
-            "type": "string",
-            "required": false,
-            "description": "Any video-specific additional flags or commands to pass to the ffmpeg executable."
-          },
-          "additionalAudioCommands": {
-            "title": "Packet Size",
-            "type": "string",
-            "required": false,
-            "description": "Any audio-specific additional flags or commands to pass to the ffmpeg executable."
-          }
-        }
+      "logging": {
+        "title": "Logging",
+        "type": "string",
+        "required": false,
+        "placeholder": "mode#",
+        "description": "The mode# label for the custom mode created in Arlo for the night state."
       }
     }
   },
   "layout": [
-    "name",
-    "email",
-    "password",
-    "include_cameras",
-    {
-      "type": "fieldset",
-      "title": "Optional Settings",
-      "expandable": true,
-      "expanded": false,
-      "items": ["interval", "stay_arm", "night_arm"]
-    }
+    "arloUser",
+    "arloPassword",
+    "mfa",
+    "emailUser",
+    "emailPassword",
+    "emailServer",
+    "refreshRate",
+    "logging"
   ]
 }

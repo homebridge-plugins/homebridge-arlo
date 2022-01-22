@@ -1,6 +1,6 @@
-import * as homebridge from "homebridge";
-import * as platform from "./platform";
-import * as settings from "./settings";
+import * as homebridge from 'homebridge';
+import * as platform from './platform';
+import * as settings from './settings';
 
 /**
  * This method registers the platform with Homebridge

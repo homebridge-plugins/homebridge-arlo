@@ -1,7 +1,6 @@
 import { API, Characteristic, DynamicPlatformPlugin, Logger, PlatformAccessory, Service } from 'homebridge';
-import * as settings from './settings';
-import { Arlo } from 'node-arlo-cameras';
-
+import { SwitchBotPlatformConfig } from './settings';
+import Arlo from 'arlo-cameras';
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
@@ -14,7 +13,7 @@ export class ArloPlatform implements DynamicPlatformPlugin {
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
 
-  constructor(public readonly log: Logger, public readonly config: settings.SwitchBotPlatformConfig, public readonly api: API) {
+  constructor(public readonly log: Logger, public readonly config: SwitchBotPlatformConfig, public readonly api: API) {
     this.debugLog(`Finished initializing platform: ${this.config.name}`);
     // only load if configured
     if (!this.config) {
@@ -79,13 +78,13 @@ export class ArloPlatform implements DynamicPlatformPlugin {
   }
 
   options() {
-    const arloUser = this.config.arloUser;                             // Arlo user
-    const arloPassword = this.config.arloPassword;                    // Arlo password
-    const mfa = this.config.mfa;                                     // Arlo MFA
-    const emailUser = this.config.emailUser;                        // Your email address registered to receive MFA
-    const emailPassword = this.config.emailUser;                   // Your email password
-    const emailServer = this.config.emailServer;                  // Email server
-    const updatePropertiesEvery = this.config.refreshRate || 5;  // Update device information every x minutes
+    const arloUser = this.config.arloUser; // Arlo user
+    const arloPassword = this.config.arloPassword; // Arlo password
+    const mfa = this.config.mfa; // Arlo MFA
+    const emailUser = this.config.emailUser; // Your email address registered to receive MFA
+    const emailPassword = this.config.emailUser; // Your email password
+    const emailServer = this.config.emailServer; // Email server
+    const updatePropertiesEvery = this.config.refreshRate || 5; // Update device information every x minutes
 
     const options = {
       arloUser,
@@ -101,7 +100,8 @@ export class ArloPlatform implements DynamicPlatformPlugin {
   }
 
   async logInToArlo() {
-    const arlo = new Arlo(this.options());
+    const options = this.options();
+    const arlo = new Arlo(options);
     if (arlo instanceof Error) {
       this.errorLog(arlo.message);
       return false;
@@ -116,7 +116,6 @@ export class ArloPlatform implements DynamicPlatformPlugin {
     this.infoLog('Logged into Arlo');
     return true;
   }
-
 
   /**
    * this method discovers devices

@@ -111,7 +111,7 @@ jobs:
       contents: write
     if: |
       needs.npm-publish.result == 'success' &&
-      github.repository == 'homebridge-plugins/node-arlo' &&
+      github.repository == 'homebridge-plugins/homebridge-arlo' &&
       (needs.npm-publish.outputs.release_type == 'beta' || needs.npm-publish.outputs.release_type == 'alpha')
     runs-on: ubuntu-latest
     steps:

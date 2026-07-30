@@ -7,7 +7,9 @@
   "main": "index.js",
   "scripts": {
     "developer": "DEBUG=arlo homebridge -D -U `pwd` -P `pwd`",
-    "lint": "jshint package.json *.js",
+    "lint": "echo \"TODO: No linting configured\"",
+    "test": "echo \"TODO: No tests configured\"",
+    "build": "echo \"TODO: No build step configured\"",
     "watch": "nodemon"
   },
   "license": "ISC",
